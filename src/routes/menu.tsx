@@ -19,7 +19,7 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const [selected, setSelected] = useState<MenuItem | null>(null);
-  const [active, setActive] = useState(categories[0].id);
+  const [active, setActive] = useState(categories[0]?.id ?? "");
   const pillsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
