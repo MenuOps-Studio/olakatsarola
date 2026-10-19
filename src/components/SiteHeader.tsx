@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/lib/cart";
-import logo from "@/assets/logo.png"; // Εισαγωγή του λογοτύπου
+import logo from "@/assets/logo.png";
 
 const links = [
   { to: "/", label: "Αρχική" },
@@ -14,9 +14,30 @@ const links = [
 export function SiteHeader() {
   const { count, setOpen } = useCart();
   const [mobile, setMobile] = useState(false);
+  
+  // Αναφορά (ref) για να ξέρουμε ποια είναι η περιοχή του Header
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Κλείσιμο του μενού όταν γίνεται κλικ έξω από το Header
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (mobile && headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setMobile(false);
+      }
+    };
+
+    // Ακούμε για κλικ (ποντίκι) και αγγίγματα (κινητό)
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [mobile]);
 
   return (
-    <header className="glass sticky top-0 z-40 border-b border-border/60">
+    <header ref={headerRef} className="glass sticky top-0 z-40 border-b border-border/60">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Λογότυπο */}
         <Link to="/" className="flex items-center">

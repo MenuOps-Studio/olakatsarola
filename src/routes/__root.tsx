@@ -22,17 +22,17 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h1 className="text-7xl font-bold text-primary">404</h1>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Η σελίδα δεν βρέθηκε</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          Η σελίδα που ψάχνετε δεν υπάρχει ή έχει μεταφερθεί.
         </p>
         <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Επιστροφή στην Αρχική
           </Link>
         </div>
       </div>
@@ -51,10 +51,10 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Κάτι πήγε στραβά
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Υπήρξε ένα σφάλμα κατά τη φόρτωση της σελίδας. Παρακαλούμε δοκιμάστε ξανά.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -62,15 +62,15 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Δοκιμή ξανά
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-full border border-input bg-card px-6 py-2.5 text-sm font-bold text-foreground transition-colors hover:bg-muted"
           >
-            Go home
+            Αρχική
           </a>
         </div>
       </div>
@@ -82,9 +82,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ΟΛΑ ΚΑΤΣΑΡΟΛΑ · Ελληνικό Μαγειρείο Σέρρες" },
-      { name: "description", content: "Ελληνικό μαγειρείο στις Σέρρες με online παραγγελία." },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0" },
+      { title: "Όλα Κατσαρόλα | Ελληνικό Μαγειρείο στις Σέρρες" },
+      { name: "description", content: "Παραγγείλετε online τα αγαπημένα σας μαγειρευτά, ψητά και σαλάτες. Φρέσκα υλικά και παραδοσιακές συνταγές." },
+      { property: "og:title", content: "Όλα Κατσαρόλα | Ελληνικό Μαγειρείο" },
+      { property: "og:description", content: "Παραγγείλετε online τα αγαπημένα σας μαγειρευτά, ψητά και σαλάτες." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
