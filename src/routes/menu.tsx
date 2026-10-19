@@ -25,13 +25,13 @@ function MenuPage() {
   const [active, setActive] = useState("");
   const pillsRef = useRef<HTMLDivElement>(null);
 
-  // Τράβηγμα δεδομένων από Supabase
-  useEffect(() => {
+ useEffect(() => {
     async function fetchMenu() {
       const { data, error } = await supabase
         .from('menu_items')
         .select('*, restaurants!inner(slug)')
-        .eq('restaurants.slug', 'ola-katsarola');
+        .eq('restaurants.slug', 'ola-katsarola')
+        .order('sort_order', { ascending: true, nullsFirst: false });
 
       if (error) {
         console.error("Σφάλμα φόρτωσης μενού:", error);
@@ -40,6 +40,8 @@ function MenuPage() {
       }
 
       const grouped = data.reduce((acc: Category[], item: any) => {
+        if (item.status === 'HIDDEN') return acc;
+
         let catObj = acc.find(c => c.name === item.category);
         
         if (!catObj) {
@@ -55,14 +57,17 @@ function MenuPage() {
         let ings: string[] = [];
         try { ings = typeof item.ingredients === 'string' ? JSON.parse(item.ingredients) : (item.ingredients || []); } catch(e) {}
 
-        // Εδώ χρησιμοποιούμε το θαυμαστικό (!) για να πούμε στο TS ότι το catObj σίγουρα υπάρχει
+        const isUnavailable = item.status === 'UNAVAILABLE_TODAY' || item.status === 'UNAVAILABLE';
+
         catObj!.items.push({
           id: item.id.toString(),
           name: item.name,
           description: item.description_el || "",
           price: Number(item.price),
           price_individual: item.price_individual ? Number(item.price_individual) : null,
-          ingredients: ings
+          ingredients: ings,
+          status: item.status,
+          sort_order: item.sort_order
         });
         return acc;
       }, []);
@@ -75,13 +80,36 @@ function MenuPage() {
       });
 
       setCategories(grouped);
-      if (grouped.length > 0 && grouped[0]) setActive(grouped[0].id);
+      if (grouped.length > 0 && grouped[0] && active === "") setActive(grouped[0].id);
       setLoading(false);
     }
+    
+    // Τραβάμε τα δεδομένα την πρώτη φορά
     fetchMenu();
-  }, []);
 
-  // Intersection Observer για το σκρολάρισμα
+    // Ανοίγουμε το κανάλι επικοινωνίας για Realtime αλλαγές
+    const channel = supabase
+      .channel('menu-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Ακούει για UPDATE, INSERT και DELETE
+          schema: 'public',
+          table: 'menu_items'
+        },
+        (payload) => {
+          console.log('Realtime Update Received:', payload);
+          fetchMenu(); // Ξανατρέχει η συνάρτηση αθόρυβα στο παρασκήνιο
+        }
+      )
+      .subscribe();
+
+    // Κλείνουμε το κανάλι όταν ο χρήστης φύγει από τη σελίδα
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []); // Το `active` αφαιρέθηκε από τα dependencies για να μην κάνει περιττά ρέντερ
+
   useEffect(() => {
     if (categories.length === 0) return;
     const obs = new IntersectionObserver(
@@ -142,44 +170,58 @@ function MenuPage() {
               </div>
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {c.items.map((item) => (
-                <article key={item.id} className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5">
-                  <div>
-                    <h3 className="text-lg font-bold">{item.name}</h3>
-                    {item.description && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
-                  </div>
-                  
-                  <div className="mt-5 flex flex-col gap-2">
-                    {/* Αν υπάρχει Ατομική Τιμή */}
-                    {item.price_individual && (
-                      <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                        <span className="font-semibold text-sm">Ατομικό: {formatPrice(item.price_individual)}</span>
+              {c.items.map((item) => {
+                // Έλεγχος Διαθεσιμότητας
+                    const isUnavailable = 
+                      item.status === 'UNAVAILABLE_TODAY' || 
+                      item.status === 'UNAVAILABLE' || 
+                      item.status === 'HIDDEN'; // Πρόσθεσε εδώ τα statuses που χρησιμοποιεί το Admin Panel σου
+                return (
+                  <article key={item.id} className={`flex flex-col justify-between rounded-2xl border border-border bg-card p-5 ${isUnavailable ? 'opacity-60 grayscale-[50%]' : ''}`}>
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-lg font-bold">{item.name}</h3>
+                        {isUnavailable && (
+                          <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                            Εξαντληθηκε
+                          </span>
+                        )}
+                      </div>
+                      {item.description && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
+                    </div>
+                    
+                    <div className="mt-5 flex flex-col gap-2">
+                      {item.price_individual && (
+                        <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                          <span className="font-semibold text-sm">Ατομικό: {formatPrice(item.price_individual)}</span>
+                          <motion.button
+                            whileTap={!isUnavailable ? { scale: 0.92 } : {}}
+                            disabled={isUnavailable}
+                            onClick={() => !isUnavailable && setSelected({ ...item, price: item.price_individual!, name: item.name + " (Ατομικό)" })}
+                            className="flex h-8 items-center gap-1 rounded-full bg-ink px-3 text-xs font-semibold text-ink-foreground hover:bg-primary hover:text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="h-3 w-3" /> Προσθήκη
+                          </motion.button>
+                        </div>
+                      )}
+                      
+                      <div className={`flex items-center justify-between ${item.price_individual ? 'rounded-lg bg-muted/50 px-3 py-2' : ''}`}>
+                        <span className={`font-semibold ${item.price_individual ? 'text-sm' : 'text-lg'}`}>
+                          {item.price_individual ? "Μερίδα:" : ""} {formatPrice(item.price)}
+                        </span>
                         <motion.button
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => setSelected({ ...item, price: item.price_individual!, name: item.name + " (Ατομικό)" })}
-                          className="flex h-8 items-center gap-1 rounded-full bg-ink px-3 text-xs font-semibold text-ink-foreground hover:bg-primary hover:text-primary-foreground"
+                          whileTap={!isUnavailable ? { scale: 0.92 } : {}}
+                          disabled={isUnavailable}
+                          onClick={() => !isUnavailable && setSelected({ ...item, name: item.name + (item.price_individual ? " (Μερίδα)" : "") })}
+                          className={`flex items-center gap-1 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${item.price_individual ? 'h-8 px-3 text-xs' : 'h-11 px-5 text-sm'}`}
                         >
-                          <Plus className="h-3 w-3" /> Προσθήκη
+                          <Plus className={item.price_individual ? "h-3 w-3" : "h-4 w-4"} /> Προσθήκη
                         </motion.button>
                       </div>
-                    )}
-                    
-                    {/* Βασική Τιμή (Μερίδα) */}
-                    <div className={`flex items-center justify-between ${item.price_individual ? 'rounded-lg bg-muted/50 px-3 py-2' : ''}`}>
-                      <span className={`font-semibold ${item.price_individual ? 'text-sm' : 'text-lg'}`}>
-                        {item.price_individual ? "Μερίδα:" : ""} {formatPrice(item.price)}
-                      </span>
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => setSelected({ ...item, name: item.name + (item.price_individual ? " (Μερίδα)" : "") })}
-                        className={`flex items-center gap-1 rounded-full bg-primary text-primary-foreground font-semibold ${item.price_individual ? 'h-8 px-3 text-xs' : 'h-11 px-5 text-sm'}`}
-                      >
-                        <Plus className={item.price_individual ? "h-3 w-3" : "h-4 w-4"} /> Προσθήκη
-                      </motion.button>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           </section>
         ))}

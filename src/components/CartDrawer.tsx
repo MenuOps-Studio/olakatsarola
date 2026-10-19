@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
+import { supabase } from "@/lib/supabase";
 
 type Step = "cart" | "checkout" | "redirect" | "done";
 
@@ -13,6 +14,7 @@ export function CartDrawer() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [payment, setPayment] = useState<"cash" | "card">("cash");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const close = () => {
     setOpen(false);
@@ -26,31 +28,46 @@ export function CartDrawer() {
       return;
     }
 
-    /*
-     * ─── SUPABASE: SAVE ORDER ───────────────────────────────────────────
-     * Here the order should be persisted, e.g.:
-     *
-     *   const { data, error } = await supabase.from("orders").insert({
-     *     customer_name: name,
-     *     address,
-     *     payment_method: payment,
-     *     items: lines,          // [{ itemId, name, price, qty, removed }]
-     *     total,
-     *     status: payment === "card" ? "awaiting_payment" : "pending",
-     *   }).select().single();
-     *
-     * For card payments, a server function would then create a
-     * Viva Wallet Smart Checkout order and return the redirect URL.
-     * ────────────────────────────────────────────────────────────────────
-     */
+    setIsSubmitting(true);
 
-    if (payment === "card") {
-      setStep("redirect");
-      // Mock: window.location.href = `https://www.vivapayments.com/web/checkout?ref=${orderCode}`
-      await new Promise((r) => setTimeout(r, 2200));
+    try {
+      // 1. Βρίσκουμε το σωστό ID του εστιατορίου
+      const { data: restData, error: restError } = await supabase
+        .from("restaurants")
+        .select("id")
+        .eq("slug", "ola-katsarola")
+        .single();
+
+      if (restError || !restData) throw new Error("Δεν βρέθηκε το εστιατόριο");
+
+      // 2. Αποθήκευση της παραγγελίας με το σωστό ID
+      const { error } = await supabase.from("orders").insert({
+        restaurant_id: restData.id, // Εδώ μπαίνει το αυτόματο ID που βρήκαμε
+        order_type: "delivery",
+        customer_last_name: name,
+        notes: `Διεύθυνση: ${address}`,
+        items: lines,
+        total_amount: total,
+        payment_method: payment,
+        payment_status: payment === "card" ? "pending" : "unpaid",
+        prep_status: "pending"
+      });
+
+      if (error) throw error;
+
+      if (payment === "card") {
+        setStep("redirect");
+        await new Promise((r) => setTimeout(r, 2200));
+      }
+      
+      clear();
+      setStep("done");
+    } catch (err) {
+      console.error("Σφάλμα καταχώρησης:", err);
+      toast.error("Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά.");
+    } finally {
+      setIsSubmitting(false);
     }
-    clear();
-    setStep("done");
   };
 
   return (
@@ -82,7 +99,7 @@ export function CartDrawer() {
                   {step === "checkout" ? "Ολοκλήρωση" : "ScanEat Καλάθι"}
                 </h2>
               </div>
-              <button onClick={close} aria-label="Κλείσιμο" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <button onClick={close} aria-label="Κλείσιμο" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted hover:bg-border transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -138,11 +155,11 @@ export function CartDrawer() {
                 <div className="flex-1 space-y-5 overflow-y-auto px-5 py-6">
                   <label className="block">
                     <span className="mb-2 block text-sm font-medium">Ονοματεπώνυμο</span>
-                    <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
                   <label className="block">
                     <span className="mb-2 block text-sm font-medium">Διεύθυνση παράδοσης</span>
-                    <input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    <input required value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
                   <div>
                     <span className="mb-2 block text-sm font-medium">Τρόπος πληρωμής</span>
@@ -152,7 +169,7 @@ export function CartDrawer() {
                           type="button"
                           key={v}
                           onClick={() => setPayment(v)}
-                          className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors ${payment === v ? "bg-ink text-ink-foreground" : "text-muted-foreground"}`}
+                          className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors ${payment === v ? "bg-ink text-ink-foreground shadow-sm" : "text-muted-foreground hover:bg-border/50"}`}
                         >
                           <Icon className="h-4 w-4" /> {label}
                         </button>
@@ -168,8 +185,8 @@ export function CartDrawer() {
                     <span>Σύνολο</span>
                     <span>{formatPrice(total)}</span>
                   </div>
-                  <button type="submit" className="h-14 w-full rounded-full bg-primary font-semibold text-primary-foreground">
-                    {payment === "card" ? "Πληρωμή με Viva Wallet" : "Υποβολή Παραγγελίας"}
+                  <button disabled={isSubmitting} type="submit" className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-70">
+                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : (payment === "card" ? "Πληρωμή με Viva Wallet" : "Υποβολή Παραγγελίας")}
                   </button>
                 </div>
               </form>
@@ -187,7 +204,7 @@ export function CartDrawer() {
               <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
                 <p className="font-display text-3xl font-bold">Ευχαριστούμε!</p>
                 <p className="text-muted-foreground">Η παραγγελία σας καταχωρήθηκε και ετοιμάζεται στην κατσαρόλα.</p>
-                <button onClick={() => { setStep("cart"); setOpen(false); }} className="mt-4 h-12 rounded-full bg-ink px-8 font-semibold text-ink-foreground">
+                <button onClick={() => { setStep("cart"); setOpen(false); }} className="mt-4 h-12 rounded-full bg-ink px-8 font-semibold text-ink-foreground hover:bg-primary transition-colors">
                   Κλείσιμο
                 </button>
               </div>

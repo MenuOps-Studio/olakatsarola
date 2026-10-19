@@ -1,24 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { Facebook, Instagram } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 export function SiteFooter() {
   return (
     <footer className="bg-ink text-ink-foreground">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-3">
         <div>
-          <p className="font-display text-2xl font-bold">
-            ΟΛΑ <span className="text-primary">ΚΑΤΣΑΡΟΛΑ</span>
+          <img src={logo} alt="Όλα Κατσαρόλα" className="h-16 w-auto brightness-0 invert" />
+          <p className="mt-4 max-w-xs text-sm opacity-80">
+            Ελληνικό μαγειρείο<br/>
+            Εθνικής Αντίστασης 33, Σέρρες 621 22<br/>
+            Τηλ: 2321 054111
           </p>
-          <p className="mt-3 max-w-xs text-sm opacity-70">Ελληνικό μαγειρείο · Εθνικής Αντίστασης 33, Σέρρες</p>
         </div>
         <nav className="flex flex-col gap-2 text-sm">
-          <p className="mb-1 text-xs uppercase tracking-widest opacity-50">Πλοήγηση</p>
-          <Link to="/" className="opacity-80 hover:opacity-100">Αρχική</Link>
-          <Link to="/menu" className="opacity-80 hover:opacity-100">Μενού</Link>
-          <Link to="/contact" className="opacity-80 hover:opacity-100">Επικοινωνία</Link>
+          <p className="mb-1 text-xs uppercase tracking-widest opacity-50 font-bold">Πλοήγηση</p>
+          <Link to="/" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Αρχική</Link>
+          <Link to="/menu" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Μενού</Link>
+          <Link to="/contact" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Επικοινωνία</Link>
         </nav>
         <div>
-          <p className="mb-3 text-xs uppercase tracking-widest opacity-50">Ακολουθήστε μας</p>
+          <p className="mb-3 text-xs uppercase tracking-widest opacity-50 font-bold">Ακολουθήστε μας</p>
           <div className="flex gap-3">
             <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-foreground/20 transition-colors hover:bg-primary hover:border-primary">
               <Facebook className="h-5 w-5" />
