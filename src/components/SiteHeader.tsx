@@ -41,7 +41,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Λογότυπο */}
         <Link to="/" className="flex items-center">
-          <img src={logo} alt="Όλα Κατσαρόλα" className="h-12 w-auto object-contain" />
+          <img src={logo} alt="Όλα Κατσαρόλα" className="h-20 w-auto object-contain" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-3">
         <div>
           {/* Αφαιρέθηκε το brightness-0 και προστέθηκε το mix-blend-screen */}
-          <img src={logo} alt="Όλα Κατσαρόλα" className="h-16 w-auto opacity-90 brightness-0 invert" />
+          <img src={logo} alt="Όλα Κατσαρόλα" className="h-25 w-auto opacity-90 brightness-0 invert" />
           <p className="mt-4 max-w-xs text-sm opacity-80">
             Ελληνικό μαγειρείο<br/>
             Εθνικής Αντίστασης 33, Σέρρες 621 22<br/>
