@@ -8,10 +8,11 @@ import about2 from "@/assets/about-2.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ΟΛΑ ΚΑΤΣΑΡΟΛΑ · Ελληνικό Μαγειρείο στις Σέρρες" },
-      { name: "description", content: "Ελληνική κουζίνα με πλούσιες γεύσεις. Παραγγείλετε online από το μαγειρείο ΟΛΑ ΚΑΤΣΑΡΟΛΑ στις Σέρρες." },
-      { property: "og:title", content: "ΟΛΑ ΚΑΤΣΑΡΟΛΑ · Ελληνικό Μαγειρείο" },
-      { property: "og:description", content: "Ελληνική κουζίνα με πλούσιες γεύσεις και online παραγγελία." },
+      { title: "Όλα Κατσαρόλα | Το Καλύτερο Μαγειρευτό Φαγητό στις Σέρρες" },
+      { name: "description", content: "Καθημερινά φρέσκα μαγειρευτά, ψητά της ώρας και δροσερές σαλάτες. Παραγγείλετε online ή ελάτε Εθνικής Αντίστασης 33, Σέρρες." },
+      { name: "keywords", content: "εστιατόριο σέρρες, μαγειρευτά σέρρες, φαγητό πακέτο, delivery σέρρες, όλα κατσαρόλα, ελληνική κουζίνα" },
+      { property: "og:title", content: "Όλα Κατσαρόλα | Ελληνικό Μαγειρείο στις Σέρρες" },
+      { property: "og:description", content: "Καθημερινά φρέσκα μαγειρευτά. Παραγγείλετε online τώρα." },
     ],
   }),
   component: Home,

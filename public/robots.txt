@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://[ΤΟ_DOMAIN_ΣΑΣ]/sitemap.xml

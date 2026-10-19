@@ -9,10 +9,11 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/menu")({
   head: () => ({
     meta: [
-      { title: "Μενού · ΟΛΑ ΚΑΤΣΑΡΟΛΑ" },
-      { name: "description", content: "Δείτε το μενού μας και παραγγείλετε online μαγειρευτά, σαλάτες, θαλασσινά και ποτά." },
-      { property: "og:title", content: "Μενού · ΟΛΑ ΚΑΤΣΑΡΟΛΑ" },
-      { property: "og:description", content: "Online παραγγελία μέσω ScanEat από το ελληνικό μαγειρείο μας." },
+      { title: "Κατάλογος & Online Παραγγελία | Όλα Κατσαρόλα Σέρρες" },
+      { name: "description", content: "Ανακαλύψτε το μενού του Όλα Κατσαρόλα στις Σέρρες. Λαχταριστά μαγειρευτά, ψητά, θαλασσινά και ορεκτικά. Κάντε την online παραγγελία σας εύκολα και γρήγορα!" },
+      { name: "keywords", content: "κατάλογος όλα κατσαρόλα, online παραγγελία φαγητού σέρρες, delivery μαγειρευτά σέρρες, μενού εστιατορίου σέρρες, φαγητό πακέτο, ελληνική κουζίνα" },
+      { property: "og:title", content: "Κατάλογος & Online Παραγγελία | Όλα Κατσαρόλα" },
+      { property: "og:description", content: "Δείτε το μενού μας με καθημερινά φρέσκα μαγειρευτά και κάντε την online παραγγελία σας απευθείας από το κινητό σας." },
     ],
   }),
   component: MenuPage,

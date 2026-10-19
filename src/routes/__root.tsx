@@ -111,10 +111,40 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "Όλα Κατσαρόλα",
+    "image": "https://[ΤΟ_DOMAIN_ΣΑΣ]/favicon.ico",
+    "@id": "https://[ΤΟ_DOMAIN_ΣΑΣ]",
+    "url": "https://[ΤΟ_DOMAIN_ΣΑΣ]",
+    "telephone": "+302321054111",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Εθνικής Αντίστασης 33",
+      "addressLocality": "Σέρρες",
+      "postalCode": "621 22",
+      "addressCountry": "GR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 41.0849, 
+      "longitude": 23.5475
+    },
+    "servesCuisine": ["Ελληνική Κουζίνα", "Μαγειρευτά", "Μεσογειακή"],
+    "priceRange": "€€",
+    "menu": "https://[ΤΟ_DOMAIN_ΣΑΣ]/menu",
+    "acceptsReservations": "False"
+  };
+
   return (
     <html lang="el">
       <head>
         <HeadContent />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+        />
       </head>
       <body>
         {children}

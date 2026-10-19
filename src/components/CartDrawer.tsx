@@ -1,37 +1,68 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
 import { supabase } from "@/lib/supabase";
 
-type Step = "cart" | "checkout" | "redirect" | "done";
+type Step = "cart" | "checkout" | "redirect" | "tracking";
 
 export function CartDrawer() {
   const { open, setOpen, lines, total, setQty, clear } = useCart();
   const [step, setStep] = useState<Step>("cart");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
   const [payment, setPayment] = useState<"cash" | "card">("cash");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // States για το Live Tracking
+  const [trackingId, setTrackingId] = useState<number | null>(null);
+  const [orderStatus, setOrderStatus] = useState<string>("WAITING");
+
   const close = () => {
     setOpen(false);
-    setTimeout(() => step === "done" && setStep("cart"), 300);
+    setTimeout(() => {
+      if (step !== "tracking") setStep("cart");
+    }, 300);
   };
+
+  // --- REALTIME LISTENER ΓΙΑ ΤΟ TRACKING ---
+  useEffect(() => {
+    if (!trackingId) return;
+
+    const channel = supabase
+      .channel(`order-tracking-${trackingId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${trackingId}` },
+        (payload) => {
+          setOrderStatus(payload.new['prep_status']);
+          
+          if (payload.new['prep_status'] === "PREPARING") toast.success("Η παραγγελία σας μπήκε στην κουζίνα!");
+          if (payload.new['prep_status'] === "READY") toast.success("Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!");
+          if (payload.new['prep_status'] === "COMPLETED") toast.success("Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!");
+          if (payload.new['prep_status'] === "CANCELLED") toast.error("Η παραγγελία ακυρώθηκε από το κατάστημα.");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [trackingId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !address.trim()) {
-      toast.error("Συμπληρώστε όνομα και διεύθυνση");
+    if (!name.trim() || !address.trim() || !phone.trim()) {
+      toast.error("Συμπληρώστε όνομα, διεύθυνση και τηλέφωνο");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // 1. Βρίσκουμε το σωστό ID του εστιατορίου
       const { data: restData, error: restError } = await supabase
         .from("restaurants")
         .select("id")
@@ -40,18 +71,28 @@ export function CartDrawer() {
 
       if (restError || !restData) throw new Error("Δεν βρέθηκε το εστιατόριο");
 
-      // 2. Αποθήκευση της παραγγελίας με το σωστό ID
-      const { error } = await supabase.from("orders").insert({
-        restaurant_id: restData.id, // Εδώ μπαίνει το αυτόματο ID που βρήκαμε
-        order_type: "delivery",
+      const formattedItems = lines.map(line => ({
+        id: line.itemId,
+        name: line.name,
+        price: line.price,
+        quantity: line.qty,
+        removedIngredients: line.removed,
+        itemNote: "" 
+      }));
+
+      const { data: newOrder, error } = await supabase.from("orders").insert({
+        restaurant_id: restData.id,
+        order_type: "DELIVERY",
         customer_last_name: name,
-        notes: `Διεύθυνση: ${address}`,
-        items: lines,
+        table_number: "Πακέτο",
+        notes: `Τηλ: ${phone} | Διεύθυνση: ${address}`,
+        items: formattedItems,
         total_amount: total,
-        payment_method: payment,
-        payment_status: payment === "card" ? "pending" : "unpaid",
-        prep_status: "pending"
-      });
+        payment_method: payment === "card" ? "CARD" : "CASH",
+        payment_status: payment === "card" ? "PENDING" : "UNPAID",
+        prep_status: "WAITING",
+        created_at: new Date().toISOString()
+      }).select("id, prep_status").single();
 
       if (error) throw error;
 
@@ -60,14 +101,28 @@ export function CartDrawer() {
         await new Promise((r) => setTimeout(r, 2200));
       }
       
+      setTrackingId(newOrder.id);
+      setOrderStatus(newOrder.prep_status);
+      
       clear();
-      setStep("done");
+      setStep("tracking");
     } catch (err) {
       console.error("Σφάλμα καταχώρησης:", err);
       toast.error("Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getStepStatus = (stepName: string) => {
+    const order = ["WAITING", "PREPARING", "READY", "COMPLETED"];
+    const currentIndex = order.indexOf(orderStatus);
+    const stepIndex = order.indexOf(stepName);
+    
+    if (orderStatus === "CANCELLED") return "cancelled";
+    if (stepIndex < currentIndex) return "completed";
+    if (stepIndex === currentIndex) return "active";
+    return "pending";
   };
 
   return (
@@ -96,7 +151,7 @@ export function CartDrawer() {
                   </button>
                 )}
                 <h2 className="text-xl font-bold">
-                  {step === "checkout" ? "Ολοκλήρωση" : "ScanEat Καλάθι"}
+                  {step === "checkout" ? "Ολοκλήρωση" : step === "tracking" ? "Παρακολούθηση" : "ScanEat Καλάθι"}
                 </h2>
               </div>
               <button onClick={close} aria-label="Κλείσιμο" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted hover:bg-border transition-colors">
@@ -158,6 +213,10 @@ export function CartDrawer() {
                     <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
                   <label className="block">
+                    <span className="mb-2 block text-sm font-medium">Τηλέφωνο Επικοινωνίας</span>
+                    <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                  </label>
+                  <label className="block">
                     <span className="mb-2 block text-sm font-medium">Διεύθυνση παράδοσης</span>
                     <input required value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
@@ -185,7 +244,7 @@ export function CartDrawer() {
                     <span>Σύνολο</span>
                     <span>{formatPrice(total)}</span>
                   </div>
-                  <button disabled={isSubmitting} type="submit" className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-70">
+                  <button disabled={isSubmitting} type="submit" className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-70 transition-colors hover:bg-primary/90">
                     {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : (payment === "card" ? "Πληρωμή με Viva Wallet" : "Υποβολή Παραγγελίας")}
                   </button>
                 </div>
@@ -200,13 +259,73 @@ export function CartDrawer() {
               </div>
             )}
 
-            {step === "done" && (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
-                <p className="font-display text-3xl font-bold">Ευχαριστούμε!</p>
-                <p className="text-muted-foreground">Η παραγγελία σας καταχωρήθηκε και ετοιμάζεται στην κατσαρόλα.</p>
-                <button onClick={() => { setStep("cart"); setOpen(false); }} className="mt-4 h-12 rounded-full bg-ink px-8 font-semibold text-ink-foreground hover:bg-primary transition-colors">
-                  Κλείσιμο
-                </button>
+            {step === "tracking" && (
+              <div className="flex flex-1 flex-col bg-card px-6 py-8">
+                <div className="text-center mb-10">
+                  <p className="font-display text-2xl font-bold text-ink">Η Παραγγελία εστάλη!</p>
+                  <p className="text-sm text-muted-foreground mt-2">Αριθμός παρακολούθησης: #{trackingId}</p>
+                </div>
+
+                {orderStatus === "CANCELLED" ? (
+                  <div className="flex flex-col items-center justify-center p-6 bg-red-50 rounded-2xl border border-red-100 text-center">
+                    <X className="h-12 w-12 text-red-500 mb-3" />
+                    <h3 className="text-lg font-bold text-red-700">Η παραγγελία ακυρώθηκε</h3>
+                    <p className="text-sm text-red-600 mt-2">Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.</p>
+                  </div>
+                ) : (
+                  <div className="relative pl-6 space-y-10 border-l-2 border-border ml-4">
+                    {/* Βήμα 1: Λήφθηκε */}
+                    <div className="relative">
+                      <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("WAITING") === "completed" || getStepStatus("WAITING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <div className={getStepStatus("WAITING") === "active" ? "opacity-100" : "opacity-50"}>
+                        <h4 className={`text-base font-bold ${getStepStatus("WAITING") === "active" ? "text-primary" : "text-ink"}`}>Λήφθηκε</h4>
+                        <p className="text-sm text-muted-foreground">Το κατάστημα ελέγχει την παραγγελία.</p>
+                      </div>
+                    </div>
+
+                    {/* Βήμα 2: Ετοιμάζεται */}
+                    <div className="relative">
+                      <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("PREPARING") === "completed" || getStepStatus("PREPARING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <Flame className="h-4 w-4" />
+                      </div>
+                      <div className={getStepStatus("PREPARING") === "active" ? "opacity-100" : "opacity-50"}>
+                        <h4 className={`text-base font-bold ${getStepStatus("PREPARING") === "active" ? "text-primary" : "text-ink"}`}>Ετοιμάζεται</h4>
+                        <p className="text-sm text-muted-foreground">Η κατσαρόλα πήρε φωτιά!</p>
+                      </div>
+                    </div>
+
+                    {/* Βήμα 3: Έτοιμη */}
+                    <div className="relative">
+                      <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("READY") === "completed" || getStepStatus("READY") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <ShoppingBag className="h-4 w-4" />
+                      </div>
+                      <div className={getStepStatus("READY") === "active" ? "opacity-100" : "opacity-50"}>
+                        <h4 className={`text-base font-bold ${getStepStatus("READY") === "active" ? "text-primary" : "text-ink"}`}>Έτοιμη</h4>
+                        <p className="text-sm text-muted-foreground">Περιμένει τον διανομέα να την παραλάβει.</p>
+                      </div>
+                    </div>
+
+                    {/* Βήμα 4: Στον δρόμο (Completed στο Admin) */}
+                    <div className="relative">
+                      <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("COMPLETED") === "active" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"}`}>
+                        <MapPin className="h-4 w-4" />
+                      </div>
+                      <div className={getStepStatus("COMPLETED") === "active" ? "opacity-100" : "opacity-50"}>
+                        <h4 className={`text-base font-bold ${getStepStatus("COMPLETED") === "active" ? "text-emerald-600" : "text-ink"}`}>Στον δρόμο</h4>
+                        <p className="text-sm text-muted-foreground">Έρχεται από στιγμή σε στιγμή!</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-auto pt-8">
+                  <button onClick={() => { setStep("cart"); setOpen(false); setTrackingId(null); }} className="h-12 w-full rounded-full bg-ink font-semibold text-ink-foreground hover:bg-primary transition-colors">
+                    Κλείσιμο παραθύρου
+                  </button>
+                  <p className="text-center text-xs text-muted-foreground mt-3">Αφήστε ανοιχτό αυτό το παράθυρο για ζωντανή εξέλιξη.</p>
+                </div>
               </div>
             )}
           </motion.aside>
