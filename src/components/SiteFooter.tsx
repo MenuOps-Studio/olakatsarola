@@ -18,8 +18,9 @@ export function SiteFooter() {
         <nav className="flex flex-col gap-2 text-sm">
           <p className="mb-1 text-xs uppercase tracking-widest opacity-50 font-bold">Πλοήγηση</p>
           <Link to="/" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Αρχική</Link>
-          <Link to="/menu" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Μενού</Link>
+          {/*<Link to="/menu" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Μενού</Link>
           <Link to="/contact" className="opacity-80 hover:opacity-100 hover:text-primary transition-colors">Επικοινωνία</Link>
+          */}
         </nav>
         <div>
           <p className="mb-3 text-xs uppercase tracking-widest opacity-50 font-bold">Ακολουθήστε μας</p>

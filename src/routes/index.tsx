@@ -35,24 +35,29 @@ function Home() {
   return (
     <>
       <section className="relative isolate flex min-h-[88vh] items-end overflow-hidden">
-        <img src={hero} alt="Παραδοσιακά ελληνικά φαγητά σε πήλινα σκεύη" width={1600} height={1008} className="absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="hero-overlay absolute inset-0 -z-10" />
-        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-32 md:pb-24">
-          <motion.p {...fade} className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-ink-foreground/80">
-            Ελληνικό Μαγειρείο · Σέρρες
-          </motion.p>
-          <motion.h1 {...fade} className="max-w-3xl text-4xl font-bold leading-[1.1] text-ink-foreground md:text-6xl">
-            Ελληνική κουζίνα με πλούσιες γεύσεις και μενού που προσαρμόζονται στις προσωπικές σας προτιμήσεις.
-          </motion.h1>
-          <motion.div {...fade} className="mt-8">
-            <Link to="/menu">
-              <motion.span whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-flex h-14 items-center gap-2 rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-soft">
-                Παραγγείλετε Τώρα <ArrowRight className="h-5 w-5" />
-              </motion.span>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+  <img src={hero} alt="Παραδοσιακά ελληνικά φαγητά σε πήλινα σκεύη" width={1600} height={1008} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+  <div className="hero-overlay absolute inset-0 -z-10" />
+  <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-32 md:pb-24">
+    <motion.p {...fade} className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-ink-foreground/80">
+      Ελληνικό Μαγειρείο · Σέρρες
+    </motion.p>
+    <motion.h1 {...fade} className="max-w-3xl text-4xl font-bold leading-[1.1] text-ink-foreground md:text-6xl">
+      Ελληνική κουζίνα με πλούσιες γεύσεις και μενού που προσαρμόζονται στις προσωπικές σας προτιμήσεις.
+    </motion.h1>
+    <motion.div {...fade} className="mt-8">
+      {/* 
+      <Link to="/menu">
+        <motion.span whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-flex h-14 items-center gap-2 rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-soft">
+          Παραγγείλετε Τώρα <ArrowRight className="h-5 w-5" />
+        </motion.span>
+      </Link>
+      */}
+      <span className="inline-flex h-14 items-center gap-2 rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-soft cursor-default">
+        Παραγγείλετε Τώρα <ArrowRight className="h-5 w-5" />
+      </span>
+    </motion.div>
+  </div>
+</section>
 
       <section className="mx-auto grid max-w-6xl gap-12 px-4 py-20 md:grid-cols-2 md:items-center md:py-28">
         <motion.div {...fade}>
