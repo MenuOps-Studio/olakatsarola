@@ -17,6 +17,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Toaster } from "@/components/ui/sonner";
+import { LiveTracker } from "@/components/LiveTracker";
 
 function NotFoundComponent() {
   return (
@@ -168,6 +169,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
         <CartDrawer />
+        <LiveTracker /> {/* Η ΝΕΑ ΠΡΟΣΘΗΚΗ ΜΑΣ ΕΔΩ */}
         <Toaster position="top-center" />
       </CartProvider>
     </QueryClientProvider>

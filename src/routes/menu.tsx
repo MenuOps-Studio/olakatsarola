@@ -1,30 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, CookingPot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ItemModal } from "@/components/ItemModal";
 import { CAT_IMAGES, formatPrice, type MenuItem, type Category } from "@/lib/menu";
 import { supabase } from "@/lib/supabase";
+import { CategoryCarousel } from "@/components/CategoryCarousel";
+import { useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
     meta: [
       { title: "Κατάλογος & Online Παραγγελία | Όλα Κατσαρόλα Σέρρες" },
       { name: "description", content: "Ανακαλύψτε το μενού του Όλα Κατσαρόλα στις Σέρρες. Λαχταριστά μαγειρευτά, ψητά, θαλασσινά και ορεκτικά. Κάντε την online παραγγελία σας εύκολα και γρήγορα!" },
-      { name: "keywords", content: "κατάλογος όλα κατσαρόλα, online παραγγελία φαγητού σέρρες, delivery μαγειρευτά σέρρες, μενού εστιατορίου σέρρες, φαγητό πακέτο, ελληνική κουζίνα" },
-      { property: "og:title", content: "Κατάλογος & Online Παραγγελία | Όλα Κατσαρόλα" },
-      { property: "og:description", content: "Δείτε το μενού μας με καθημερινά φρέσκα μαγειρευτά και κάντε την online παραγγελία σας απευθείας από το κινητό σας." },
     ],
   }),
   component: MenuPage,
 });
+
+// Βοηθητική συνάρτηση για ΑΚΡΙΒΕΣ scroll
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id);
+  if (!element) return;
+  const headerOffset = 140; 
+  const elementPosition = element.getBoundingClientRect().top;
+  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  
+  window.scrollTo({
+    top: offsetPosition,
+    behavior: "smooth"
+  });
+};
 
 function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MenuItem | null>(null);
   const [active, setActive] = useState("");
+  
   const pillsRef = useRef<HTMLDivElement>(null);
+  const isClickScrolling = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hashHandled = useRef(false); // Κλειδώνει το αρχικό scroll από το URL
+
+  // ΠΡΟΣΘΗΚΗ ΕΔΩ: Τραβάμε τα είδη που υπάρχουν στο καλάθι
+  const { lines } = useCart();
 
  useEffect(() => {
     async function fetchMenu() {
@@ -42,14 +62,13 @@ function MenuPage() {
 
       const grouped = data.reduce((acc: Category[], item: any) => {
         if (item.status === 'HIDDEN') return acc;
-
         let catObj = acc.find(c => c.name === item.category);
         
         if (!catObj) {
           catObj = { 
-            id: (item.category || "").toLowerCase().replace(/[^a-z0-eu]/g, '-'), 
+            id: (item.category || "Άλλο").replace(/[\s/-]+/g, '-'),
             name: item.category || "Άλλο", 
-            image: CAT_IMAGES[item.category] || CAT_IMAGES["Ορεκτικά"] || "", 
+            images: CAT_IMAGES[item.category] || ["https://placehold.co/1200x600/111/fff?text=No+Image"],
             items: [] 
           };
           acc.push(catObj);
@@ -57,8 +76,6 @@ function MenuPage() {
         
         let ings: string[] = [];
         try { ings = typeof item.ingredients === 'string' ? JSON.parse(item.ingredients) : (item.ingredients || []); } catch(e) {}
-
-        const isUnavailable = item.status === 'UNAVAILABLE_TODAY' || item.status === 'UNAVAILABLE';
 
         catObj!.items.push({
           id: item.id.toString(),
@@ -81,56 +98,104 @@ function MenuPage() {
       });
 
       setCategories(grouped);
-      if (grouped.length > 0 && grouped[0] && active === "") setActive(grouped[0].id);
       setLoading(false);
     }
     
-    // Τραβάμε τα δεδομένα την πρώτη φορά
     fetchMenu();
 
-    // Ανοίγουμε το κανάλι επικοινωνίας για Realtime αλλαγές
-    const channel = supabase
-      .channel('menu-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Ακούει για UPDATE, INSERT και DELETE
-          schema: 'public',
-          table: 'menu_items'
-        },
-        (payload) => {
-          console.log('Realtime Update Received:', payload);
-          fetchMenu(); // Ξανατρέχει η συνάρτηση αθόρυβα στο παρασκήνιο
-        }
-      )
+    const channel = supabase.channel('menu-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => fetchMenu())
       .subscribe();
 
-    // Κλείνουμε το κανάλι όταν ο χρήστης φύγει από τη σελίδα
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []); // Το `active` αφαιρέθηκε από τα dependencies για να μην κάνει περιττά ρέντερ
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
+  // ΛΥΣΗ ΓΙΑ ΤΟ HASH (Redirect από το Menu Preview): 
+  // Εκτελείται ΜΟΝΟ όταν έχουν γεμίσει οι κατηγορίες (categories.length > 0)
+  useEffect(() => {
+    if (categories.length > 0 && !hashHandled.current) {
+      if (!active) setActive(categories[0].id); // Ορισμός πρώτου active αν δεν υπάρχει hash
+
+      const hash = window.location.hash;
+      if (hash) {
+        const id = hash.replace('#', '');
+        // Δίνουμε 100ms χρόνο στον Browser να κάνει render τα divs πριν προσπαθήσει να τα βρει
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            isClickScrolling.current = true;
+            setActive(id);
+            scrollToSection(id);
+            setTimeout(() => { isClickScrolling.current = false; }, 1000);
+          }
+        }, 100);
+      }
+      hashHandled.current = true; // Το κλειδώνουμε για να μην ξανατρέξει
+    }
+  }, [categories]);
+
+  // Observer για το Scroll Tracking
   useEffect(() => {
     if (categories.length === 0) return;
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
-      { rootMargin: "-140px 0px -60% 0px" },
-    );
+    const visibleSections = new Set<string>();
+
+    const obs = new IntersectionObserver((entries) => {
+      if (isClickScrolling.current) return;
+      
+      entries.forEach((e) => {
+        if (e.isIntersecting) visibleSections.add(e.target.id);
+        else visibleSections.delete(e.target.id);
+      });
+
+      if (visibleSections.size > 0) {
+        const firstVisible = categories.find(c => visibleSections.has(c.id));
+        if (firstVisible && active !== firstVisible.id) {
+          setActive(firstVisible.id);
+        }
+      }
+    }, { rootMargin: "-150px 0px -50% 0px", threshold: 0.1 }); 
+    
     categories.forEach((c) => {
       const el = document.getElementById(c.id);
       if (el) obs.observe(el);
     });
+    
     return () => obs.disconnect();
-  }, [categories]);
+  }, [categories, active]);
 
+  // ΛΥΣΗ ΓΙΑ ΤΟ NAV BAR BUG:
+  // Δεν κάνει scroll ασταμάτητα. Ελέγχει αν το κουμπί βγήκε εκτός οθόνης και ΜΟΝΟ τότε το φέρνει στο κέντρο.
   useEffect(() => {
-    pillsRef.current?.querySelector(`[data-cat="${active}"]`)?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    const container = pillsRef.current;
+    const activePill = container?.querySelector(`[data-cat="${active}"]`) as HTMLElement;
+
+    if (container && activePill) {
+      const containerRect = container.getBoundingClientRect();
+      const pillRect = activePill.getBoundingClientRect();
+
+      const isOutOfView = pillRect.left < containerRect.left || pillRect.right > containerRect.right;
+
+      if (isOutOfView) {
+        activePill.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      }
+    }
   }, [active]);
 
+  // Όταν ο χρήστης πατάει μια κατηγορία
   const go = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) window.scrollTo({ top: el.offsetTop - 130, behavior: "smooth" });
+    // Αν πατήσει γρήγορα 2-3 φορές, μηδενίζουμε το παλιό timeout για να μην μπερδευτεί το Observer
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    
+    isClickScrolling.current = true;
+    setActive(id);
+    scrollToSection(id);
+    
+    // Αναγκάζουμε το pill να κεντράρει άμεσα στο κλικ
+    pillsRef.current?.querySelector(`[data-cat="${id}"]`)?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      isClickScrolling.current = false;
+    }, 1000); 
   };
 
   if (loading) {
@@ -144,14 +209,14 @@ function MenuPage() {
         <h1 className="mt-2 text-4xl font-bold md:text-5xl">Το μενού μας</h1>
       </div>
 
-      <div className="glass sticky top-16 z-30 mt-6 border-y border-border/60">
+      <div className="glass sticky top-16 z-30 mt-6 border-y border-border/60 shadow-sm">
         <div ref={pillsRef} className="no-scrollbar mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3">
           {categories.map((c) => (
             <button
               key={c.id}
               data-cat={c.id}
               onClick={() => go(c.id)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${active === c.id ? "bg-ink text-ink-foreground" : "bg-card text-foreground"}`}
+              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-semibold transition-all shadow-sm ${active === c.id ? "bg-ink text-ink-foreground scale-105" : "bg-card text-foreground hover:bg-muted"}`}
             >
               {c.name}
             </button>
@@ -161,27 +226,51 @@ function MenuPage() {
 
       <div className="mx-auto max-w-6xl space-y-14 px-4 py-10">
         {categories.map((c) => (
-          <section key={c.id} id={c.id}>
+          <section key={c.id} id={c.id} className="scroll-mt-32">
             <div className="relative overflow-hidden rounded-2xl">
-              <img src={c.image} alt={c.name} loading="lazy" width={1200} height={608} className="h-36 w-full object-cover md:h-48" />
-              <div className="hero-overlay absolute inset-0" />
-              <div className="absolute bottom-0 left-0 p-5">
+              <CategoryCarousel images={c.images} categoryName={c.name} />
+              <div className="hero-overlay absolute inset-0 z-10" />
+              <div className="absolute bottom-0 left-0 p-5 z-20">
                 <h2 className="text-2xl font-bold text-ink-foreground md:text-3xl">{c.name}</h2>
-                {c.note && <p className="mt-1 text-sm text-ink-foreground/80">{c.note}</p>}
               </div>
-            </div>
+            </div>    
+            
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {c.items.map((item) => {
-                // Έλεγχος Διαθεσιμότητας
-                    const isUnavailable = 
-                      item.status === 'UNAVAILABLE_TODAY' || 
-                      item.status === 'UNAVAILABLE' || 
-                      item.status === 'HIDDEN'; // Πρόσθεσε εδώ τα statuses που χρησιμοποιεί το Admin Panel σου
+                const isUnavailable = item.status === 'UNAVAILABLE_TODAY' || item.status === 'UNAVAILABLE' || item.status === 'HIDDEN';
+                
+                // ΝΕΟ: Υπολογισμός ποσότητας του συγκεκριμένου πιάτου στο καλάθι
+                const itemQty = lines.filter((l) => l.itemId === item.id).reduce((sum, l) => sum + l.qty, 0);
+                const hasItem = itemQty > 0;
+
                 return (
-                  <article key={item.id} className={`flex flex-col justify-between rounded-2xl border border-border bg-card p-5 ${isUnavailable ? 'opacity-60 grayscale-[50%]' : ''}`}>
+                  <article 
+                    key={item.id} 
+                    // ΝΕΟ: Δυναμικό class για το μπορντό περίγραμμα (border-primary και ring)
+                    className={`flex flex-col justify-between rounded-2xl border p-5 transition-all ${
+                      isUnavailable ? 'opacity-60 grayscale-[50%] border-border bg-card' : 
+                      hasItem ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5' : 'border-border bg-card'
+                    }`}
+                  >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-lg font-bold">{item.name}</h3>
+                        
+                        {/* ΝΕΟ: Τίτλος & Δυναμικές Κατσαρόλες */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-bold">{item.name}</h3>
+                          {hasItem && (
+                            <div className="flex items-center gap-0.5 text-primary">
+                              {itemQty <= 5 ? (
+                                Array.from({ length: itemQty }).map((_, i) => <CookingPot key={i} className="h-4 w-4" />)
+                              ) : (
+                                <span className="flex items-center gap-1 text-sm font-bold">
+                                  {itemQty} <CookingPot className="h-4 w-4" />
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         {isUnavailable && (
                           <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
                             Εξαντληθηκε

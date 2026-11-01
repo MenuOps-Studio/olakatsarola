@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, CheckCircle } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, CheckCircle, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useCart } from "@/lib/cart";
+import { useCart, type CartLine } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
+import { ItemModal } from "@/components/ItemModal";
 import { supabase } from "@/lib/supabase";
+import { Trash2 } from "lucide-react";
 
 type Step = "cart" | "checkout" | "redirect" | "tracking";
 
@@ -14,12 +16,30 @@ export function CartDrawer() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [floor, setFloor] = useState("");
+  const [bell, setBell] = useState("");
+  const [comments, setComments] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [payment, setPayment] = useState<"cash" | "card">("cash");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingLine, setEditingLine] = useState<CartLine | null>(null);
 
   // States για το Live Tracking
   const [trackingId, setTrackingId] = useState<number | null>(null);
   const [orderStatus, setOrderStatus] = useState<string>("WAITING");
+
+// --- LISTENER ΓΙΑ ΑΝΟΙΓΜΑ TRACKING ΑΠΟ ΤΟ LIVE TRACKER ---
+  useEffect(() => {
+    const handleOpenTracking = (e: any) => {
+      setTrackingId(e.detail.orderId);
+      setOrderStatus(e.detail.status);
+      setStep("tracking"); // Πάμε στο βήμα παρακολούθησης
+      setOpen(true);       // Ανοίγουμε το συρτάρι του καλαθιού
+    };
+
+    window.addEventListener("scaneat_open_tracking", handleOpenTracking);
+    return () => window.removeEventListener("scaneat_open_tracking", handleOpenTracking);
+  }, [setOpen]);
 
   const close = () => {
     setOpen(false);
@@ -53,10 +73,20 @@ export function CartDrawer() {
     };
   }, [trackingId]);
 
-  const submit = async (e: React.FormEvent) => {
+ const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !address.trim() || !phone.trim()) {
-      toast.error("Συμπληρώστε όνομα, διεύθυνση και τηλέφωνο");
+    
+    // Αυστηροί έλεγχοι
+    if (name.trim().length < 3) {
+      toast.error("Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.");
+      return;
+    }
+    if (!address.trim()) {
+      toast.error("Παρακαλώ συμπληρώστε διεύθυνση.");
+      return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      toast.error("Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.");
       return;
     }
 
@@ -80,12 +110,21 @@ export function CartDrawer() {
         itemNote: "" 
       }));
 
+      // Φτιάχνουμε το τελικό κείμενο για το πεδίο notes
+      const orderNotes = [
+        `Τηλ: ${phone}`,
+        `Διεύθυνση: ${address}`,
+        floor && `Όροφος: ${floor}`,
+        bell && `Κουδούνι: ${bell}`,
+        comments && `Σχόλια: ${comments}`
+      ].filter(Boolean).join(" | ");
+
       const { data: newOrder, error } = await supabase.from("orders").insert({
         restaurant_id: restData.id,
         order_type: "DELIVERY",
         customer_last_name: name,
         table_number: "Πακέτο",
-        notes: `Τηλ: ${phone} | Διεύθυνση: ${address}`,
+        notes: orderNotes,
         items: formattedItems,
         total_amount: total,
         payment_method: payment === "card" ? "CARD" : "CASH",
@@ -96,19 +135,53 @@ export function CartDrawer() {
 
       if (error) throw error;
 
+      // Αποθηκεύουμε το ID της παραγγελίας
+      localStorage.setItem('lastOrderId', newOrder.id.toString()); // Κρατάμε το παλιό για συμβατότητα με το success.tsx
+      
+      // ΝΕΑ ΛΟΓΙΚΗ ΓΙΑ MULTIPLE ORDERS
+      const savedOrders = localStorage.getItem("scaneat_active_orders");
+      let activeList = [];
+      if (savedOrders) {
+        try { activeList = JSON.parse(savedOrders); } catch (e) { activeList = []; }
+      }
+      activeList.push(newOrder.id);
+      localStorage.setItem("scaneat_active_orders", JSON.stringify(activeList));
+      
+      // ΠΡΟΣΘΗΚΗ: Φωνάζουμε στο LiveTracker ότι μπήκε νέα παραγγελία!
+      window.dispatchEvent(new Event("scaneat_new_order_added"));
+
+      // --- ΣΥΝΔΕΣΗ ΜΕ VIVA WALLET ---
       if (payment === "card") {
         setStep("redirect");
-        await new Promise((r) => setTimeout(r, 2200));
+        
+        // 1. Κλήση της Edge Function για λήψη OrderCode
+        const { data: vivaData, error: vivaError } = await supabase.functions.invoke('create-viva-order', {
+          body: {
+            amount: total,
+            customerName: name,
+            customerEmail: "",
+            orderNotes: `Παραγγελία #${newOrder.id} - ${phone}`
+          }
+        });
+
+        if (vivaError || !vivaData?.orderCode) {
+          throw new Error("Αποτυχία δημιουργίας πληρωμής Viva Wallet.");
+        }
+
+        // 2. Ανακατεύθυνση στο ασφαλές περιβάλλον του Smart Checkout (Demo)
+        window.location.href = `https://demo.vivapayments.com/web/checkout?ref=${vivaData.orderCode}`;
+        return; // Σταματάμε την εκτέλεση, ο χρήστης φεύγει από το site
       }
       
+      // Διαχείριση μετρητών (Αντικαταβολή)
       setTrackingId(newOrder.id);
       setOrderStatus(newOrder.prep_status);
-      
       clear();
       setStep("tracking");
     } catch (err) {
       console.error("Σφάλμα καταχώρησης:", err);
       toast.error("Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά.");
+      setStep("cart");
     } finally {
       setIsSubmitting(false);
     }
@@ -126,8 +199,9 @@ export function CartDrawer() {
   };
 
   return (
-    <AnimatePresence>
-      {open && (
+    <>  {/* <-- ΠΡΟΣΘΕΣΕ ΜΟΝΟ ΑΥΤΗ ΤΗ ΓΡΑΜΜΗ */}
+      <AnimatePresence>
+        {open && (
         <>
           <motion.div
             className="fixed inset-0 z-50 bg-ink/50"
@@ -170,25 +244,31 @@ export function CartDrawer() {
                   ) : (
                     <ul className="divide-y divide-border">
                       {lines.map((l) => (
-                        <li key={l.key} className="flex gap-3 py-4">
-                          <div className="flex-1">
-                            <p className="font-semibold">{l.name}</p>
-                            {l.removed.length > 0 && (
-                              <p className="mt-1 text-xs text-primary">Χωρίς: {l.removed.join(", ")}</p>
-                            )}
-                            <p className="mt-1 text-sm text-muted-foreground">{formatPrice(l.price * l.qty)}</p>
-                          </div>
-                          <div className="flex h-10 items-center rounded-full border border-border">
-                            <button aria-label="Μείωση" onClick={() => setQty(l.key, l.qty - 1)} className="flex h-10 w-9 items-center justify-center"><Minus className="h-4 w-4" /></button>
-                            <span className="w-5 text-center text-sm font-semibold">{l.qty}</span>
-                            <button aria-label="Αύξηση" onClick={() => setQty(l.key, l.qty + 1)} className="flex h-10 w-9 items-center justify-center"><Plus className="h-4 w-4" /></button>
+                        <li key={l.key} className="flex items-center gap-3 py-4">
+                          <button onClick={() => setEditingLine(l)} className="flex-1 text-left group rounded-xl p-2 -ml-2 transition-colors hover:bg-muted/50">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold group-hover:text-primary transition-colors">{l.name}</p>
+                              <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            {l.removed.length > 0 && <p className="mt-1 text-xs text-primary">Χωρίς: {l.removed.join(", ")}</p>}
+                            {l.note && <p className="mt-1 text-xs text-muted-foreground italic">"{l.note}"</p>}
+                            <p className="mt-1 text-sm font-medium text-muted-foreground">{formatPrice(l.price * l.qty)}</p>
+                          </button>
+                          
+                          <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex h-10 items-center rounded-full border border-border">
+                              <button aria-label="Μείωση" onClick={() => setQty(l.key, l.qty - 1)} className="flex h-10 w-9 items-center justify-center"><Minus className="h-4 w-4" /></button>
+                              <span className="w-5 text-center text-sm font-semibold">{l.qty}</span>
+                              <button aria-label="Αύξηση" onClick={() => setQty(l.key, l.qty + 1)} className="flex h-10 w-9 items-center justify-center"><Plus className="h-4 w-4" /></button>
+                            </div>
+                            <button aria-label="Διαγραφή" onClick={() => setQty(l.key, 0)} className="flex h-10 w-10 items-center justify-center rounded-full text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <div className="border-t border-border p-5">
+                <div className="border-t border-border p-5 bg-background">
                   <div className="mb-4 flex justify-between text-lg font-bold">
                     <span>Σύνολο</span>
                     <span>{formatPrice(total)}</span>
@@ -197,7 +277,7 @@ export function CartDrawer() {
                     whileTap={{ scale: 0.97 }}
                     disabled={lines.length === 0}
                     onClick={() => setStep("checkout")}
-                    className="h-14 w-full rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40"
+                    className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40 transition-colors hover:bg-primary/90"
                   >
                     Συνέχεια στην Παραγγελία
                   </motion.button>
@@ -207,19 +287,50 @@ export function CartDrawer() {
 
             {step === "checkout" && (
               <form onSubmit={submit} className="flex flex-1 flex-col">
-                <div className="flex-1 space-y-5 overflow-y-auto px-5 py-6">
+                <div className="flex-1 space-y-4 overflow-y-auto px-5 py-6">
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Ονοματεπώνυμο</span>
-                    <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    <span className="mb-2 block text-sm font-medium">Ονοματεπώνυμο *</span>
+                    <input required minLength={3} value={name} onChange={(e) => setName(e.target.value)} placeholder="π.χ. Γιώργος Παπαδόπουλος" className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Τηλέφωνο Επικοινωνίας</span>
-                    <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    <span className="mb-2 block text-sm font-medium">Τηλέφωνο Επικοινωνίας *</span>
+                    <input 
+                      required 
+                      type="tel" 
+                      pattern="\d{10}" 
+                      maxLength={10} 
+                      value={phone} 
+                      onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity("Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.")}
+                      onChange={(e) => {
+                        (e.target as HTMLInputElement).setCustomValidity(""); // Καθαρίζει το σφάλμα μόλις αρχίσει να πληκτρολογεί
+                        setPhone(e.target.value.replace(/\D/g, ''));
+                      }} 
+                      placeholder="π.χ. 6900000000" 
+                      className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" 
+                    />
                   </label>
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Διεύθυνση παράδοσης</span>
-                    <input required value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    <span className="mb-2 block text-sm font-medium">Διεύθυνση παράδοσης *</span>
+                    <input required value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Οδός και αριθμός" className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                   </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium">Όροφος</span>
+                      <input value={floor} onChange={(e) => setFloor(e.target.value)} placeholder="π.χ. 2ος" className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium">Κουδούνι</span>
+                      <input value={bell} onChange={(e) => setBell(e.target.value)} placeholder="π.χ. Παπαδόπουλος" className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                    </label>
+                  </div>
+                  <label className="block">
+                    <span className="mb-2 flex justify-between text-sm font-medium">
+                      <span>Σχόλια</span>
+                      <span className="text-muted-foreground text-xs">{comments.length}/50</span>
+                    </span>
+                    <input value={comments} onChange={(e) => setComments(e.target.value)} maxLength={50} placeholder="Πρόσθετες οδηγίες (προαιρετικό)" className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                  </label>
+                  
                   <div>
                     <span className="mb-2 block text-sm font-medium">Τρόπος πληρωμής</span>
                     <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted p-1">
@@ -239,12 +350,30 @@ export function CartDrawer() {
                     )}
                   </div>
                 </div>
-                <div className="border-t border-border p-5">
+                <div className="border-t border-border p-5 bg-background">
                   <div className="mb-4 flex justify-between text-lg font-bold">
                     <span>Σύνολο</span>
                     <span>{formatPrice(total)}</span>
                   </div>
-                  <button disabled={isSubmitting} type="submit" className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-70 transition-colors hover:bg-primary/90">
+                  
+                  <label className="mb-5 flex items-start gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      required
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-input text-primary focus:ring-primary" 
+                    />
+                    <span className="text-xs text-muted-foreground leading-relaxed">
+                      Έχω διαβάσει και αποδέχομαι τους <a href="/terms" target="_blank" className="text-primary underline hover:text-primary/80">Όρους Χρήσης</a> και την <a href="/privacy" target="_blank" className="text-primary underline hover:text-primary/80">Πολιτική Απορρήτου</a>. Συμφωνώ στην επεξεργασία των προσωπικών μου δεδομένων για την εκτέλεση της παραγγελίας.
+                    </span>
+                  </label>
+
+                  <button 
+                    disabled={isSubmitting || !acceptedTerms} 
+                    type="submit" 
+                    className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-primary/90"
+                  >
                     {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : (payment === "card" ? "Πληρωμή με Viva Wallet" : "Υποβολή Παραγγελίας")}
                   </button>
                 </div>
@@ -330,7 +459,14 @@ export function CartDrawer() {
             )}
           </motion.aside>
         </>
-      )}
+     )}
     </AnimatePresence>
+
+    <ItemModal
+      item={editingLine?.rawItem || null}
+      editLine={editingLine}
+      onClose={() => setEditingLine(null)}
+    />
+  </>
   );
 }

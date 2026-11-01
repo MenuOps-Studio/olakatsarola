@@ -7,8 +7,8 @@ import logo from "@/assets/logo.png";
 
 const links = [
   { to: "/", label: "Αρχική" },
-  //{ to: "/menu", label: "Μενού" },
- // { to: "/contact", label: "Επικοινωνία" },
+  { to: "/menu", label: "Μενού" },
+  { to: "/contact", label: "Επικοινωνία" },
 ] as const;
 
 export function SiteHeader() {

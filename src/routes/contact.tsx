@@ -57,7 +57,7 @@ function Contact() {
         <div className="min-h-[360px] overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
           <iframe
             title="Χάρτης ΟΛΑ ΚΑΤΣΑΡΟΛΑ"
-            src="https://www.google.com/maps?q=%CE%95%CE%B8%CE%BD%CE%B9%CE%BA%CE%AE%CF%82+%CE%91%CE%BD%CF%84%CE%AF%CF%83%CF%84%CE%B1%CF%83%CE%B7%CF%82+33,+%CE%A3%CE%AD%CF%81%CF%81%CE%B5%CF%81%CE%B5%CF%82&output=embed"
+            src="https://maps.google.com/maps?q=ΟΛΑ%20ΚΑΤΣΑΡΟΛΑ%20Σέρρες,%20Εθνικής%20Αντίστασης%2033&t=&z=16&ie=UTF8&iwloc=&output=embed"
             className="h-full min-h-[360px] w-full"
             loading="lazy"
           />
