@@ -111,20 +111,21 @@ export function CartDrawer() {
       }));
 
       // Φτιάχνουμε το τελικό κείμενο για το πεδίο notes
+      // Στα notes κρατάμε ΜΟΝΟ τον όροφο, το κουδούνι και το σχόλιο του πελάτη (αν υπάρχουν)
       const orderNotes = [
-        `Τηλ: ${phone}`,
-        `Διεύθυνση: ${address}`,
         floor && `Όροφος: ${floor}`,
         bell && `Κουδούνι: ${bell}`,
-        comments && `Σχόλια: ${comments}`
+        comments && `${comments}`
       ].filter(Boolean).join(" | ");
 
       const { data: newOrder, error } = await supabase.from("orders").insert({
         restaurant_id: restData.id,
         order_type: "DELIVERY",
         customer_last_name: name,
+        customer_phone: phone,       // <--- Προσθήκη τηλεφώνου στη βάση
+        delivery_address: address,   // <--- Προσθήκη διεύθυνσης στη βάση
         table_number: "Πακέτο",
-        notes: orderNotes,
+        notes: orderNotes,           // <--- Θα περιέχει πλέον μόνο τα επιπλέον στοιχεία/σχόλια
         items: formattedItems,
         total_amount: total,
         payment_method: payment === "card" ? "CARD" : "CASH",
