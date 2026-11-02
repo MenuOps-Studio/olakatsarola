@@ -123,7 +123,7 @@ export function CartDrawer() {
         order_type: "DELIVERY",
         customer_last_name: name,
         customer_phone: phone,       // <--- Προσθήκη τηλεφώνου στη βάση
-        delivery_address: address,   // <--- Προσθήκη διεύθυνσης στη βάση
+        customer_address: address,   // <--- Προσθήκη διεύθυνσης στη βάση
         table_number: "Πακέτο",
         notes: orderNotes,           // <--- Θα περιέχει πλέον μόνο τα επιπλέον στοιχεία/σχόλια
         items: formattedItems,
