@@ -19,6 +19,9 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Toaster } from "@/components/ui/sonner";
 import { LiveTracker } from "@/components/LiveTracker";
 
+// ΝΕΟ: Εισαγωγή του i18n
+import { I18nProvider, useI18n } from "@/lib/i18n"; 
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -155,23 +158,57 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+// ΝΕΟ: Floating Component για επιλογή γλώσσας
+function LanguageSwitcher() {
+  const { lang, setLang } = useI18n();
+  
+  return (
+    <div className="fixed bottom-4 left-4 z-[90] flex gap-2 rounded-2xl border border-border/50 bg-background/80 p-2 shadow-lg backdrop-blur-md sm:bottom-6 sm:left-6">
+      <button 
+        aria-label="Ελληνικά" 
+        onClick={() => setLang('el')} 
+        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'el' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+      >
+        🇬🇷
+      </button>
+      <button 
+        aria-label="English" 
+        onClick={() => setLang('en')} 
+        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'en' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+      >
+        🇬🇧
+      </button>
+      <button 
+        aria-label="Български" 
+        onClick={() => setLang('bg')} 
+        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'bg' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+      >
+        🇧🇬
+      </button>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-          <SiteFooter />
-        </div>
-        <CartDrawer />
-        <LiveTracker /> {/* Η ΝΕΑ ΠΡΟΣΘΗΚΗ ΜΑΣ ΕΔΩ */}
-        <Toaster position="top-center" />
-      </CartProvider>
+      <I18nProvider>  {/* ΝΕΟ: Αγκαλιάζουμε όλο το App με τον "Εγκέφαλο" των γλωσσών */}
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <SiteHeader />
+            <main className="flex-1">
+              <Outlet />
+            </main>
+            <SiteFooter />
+          </div>
+          <CartDrawer />
+          <LiveTracker />
+          <LanguageSwitcher /> {/* ΝΕΟ: Προσθήκη των σημαιών */}
+          <Toaster position="top-center" />
+        </CartProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }
