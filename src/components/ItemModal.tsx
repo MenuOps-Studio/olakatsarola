@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCart, type CartLine } from "@/lib/cart";
 import { formatPrice, type MenuItem } from "@/lib/menu";
+import { supabase } from "@/lib/supabase";
 
 export function ItemModal({ 
   item, 
-  editLine, // ΝΕΟ: Η γραμμή προς επεξεργασία (αν υπάρχει)
+  editLine,
   onClose 
 }: { 
   item: MenuItem | null; 
@@ -18,8 +19,8 @@ export function ItemModal({
   const [removed, setRemoved] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState("");
+  const [ingredientStatuses, setIngredientStatuses] = useState<Record<string, string>>({});
 
-  // Όταν ανοίγει το Modal, αν είναι για "Επεξεργασία" φορτώνει τις παλιές επιλογές
   useEffect(() => {
     if (editLine) {
       setRemoved(editLine.removed);
@@ -30,6 +31,22 @@ export function ItemModal({
       setQty(1);
       setNote("");
     }
+
+    if (item) {
+      const fetchStatuses = async () => {
+        const { data } = await supabase
+          .from('ingredients')
+          .select('name, status')
+          .eq('restaurant_id', 5);
+
+        if (data) {
+          const statuses: Record<string, string> = {};
+          data.forEach(d => statuses[d.name] = d.status);
+          setIngredientStatuses(statuses);
+        }
+      };
+      fetchStatuses();
+    }
   }, [item, editLine]);
 
   const toggle = (ing: string) =>
@@ -39,7 +56,7 @@ export function ItemModal({
     <AnimatePresence>
       {item && (
         <motion.div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/60 sm:items-center" // z-[60] για να είναι πάνω από το CartDrawer
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/60 sm:items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -72,17 +89,33 @@ export function ItemModal({
                 </p>
                 <ul className="space-y-2">
                   {item.ingredients.map((ing) => {
-                    const on = !removed.includes(ing);
+                    const status = ingredientStatuses[ing] || 'AVAILABLE';
+                    const isUnavailable = status === 'UNAVAILABLE' || status === 'UNAVAILABLE_TODAY';
+                    const on = !removed.includes(ing) && !isUnavailable;
+
                     return (
                       <li key={ing}>
                         <button
+                          disabled={isUnavailable}
                           onClick={() => toggle(ing)}
-                          className="flex w-full items-center justify-between rounded-xl border border-border px-4 py-3 text-left transition-colors"
+                          className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
+                            isUnavailable ? "border-destructive/30 bg-destructive/5 cursor-not-allowed" : "border-border"
+                          }`}
                         >
-                          <span className={on ? "" : "text-muted-foreground line-through"}>{ing}</span>
-                          <span className={`flex h-6 w-6 items-center justify-center rounded-md border ${on ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                            {on && <Check className="h-4 w-4" />}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className={on ? "" : "text-muted-foreground line-through"}>{ing}</span>
+                            {isUnavailable && <span className="text-[10px] font-bold text-destructive uppercase tracking-wider">Εξαντληθηκε</span>}
+                          </div>
+                          
+                          {!isUnavailable ? (
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${on ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                              {on && <Check className="h-4 w-4" />}
+                            </span>
+                          ) : (
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10">
+                              <X className="h-4 w-4 text-destructive" />
+                            </span>
+                          )}
                         </button>
                       </li>
                     );
@@ -91,7 +124,6 @@ export function ItemModal({
               </div>
             )}
 
-            {/* ΠΕΔΙΟ ΣΧΟΛΙΩΝ */}
             <div className="mt-6">
               <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5" /> Ειδικές Οδηγίες (Προαιρετικό)

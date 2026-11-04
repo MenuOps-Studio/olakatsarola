@@ -37,17 +37,31 @@ function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MenuItem | null>(null);
   const [active, setActive] = useState("");
+  const [ingredientStatuses, setIngredientStatuses] = useState<Record<string, string>>({}); // ΝΕΟ: Κρατάει τα live status των υλικών
   
   const pillsRef = useRef<HTMLDivElement>(null);
   const isClickScrolling = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hashHandled = useRef(false); // Κλειδώνει το αρχικό scroll από το URL
+  const hashHandled = useRef(false);
 
-  // ΠΡΟΣΘΗΚΗ ΕΔΩ: Τραβάμε τα είδη που υπάρχουν στο καλάθι
+  // Τραβάμε τα είδη που υπάρχουν στο καλάθι
   const { lines } = useCart();
 
  useEffect(() => {
     async function fetchMenu() {
+      // 1. Φέρνουμε την κατάσταση των υλικών από τη βάση
+      const { data: ingData } = await supabase
+        .from('ingredients')
+        .select('name, status')
+        .eq('restaurant_id', 5); // ID του Όλα Κατσαρόλα
+
+      if (ingData) {
+        const statuses: Record<string, string> = {};
+        ingData.forEach(d => statuses[d.name] = d.status);
+        setIngredientStatuses(statuses);
+      }
+
+      // 2. Φέρνουμε τα πιάτα του μενού
       const { data, error } = await supabase
         .from('menu_items')
         .select('*, restaurants!inner(slug)')
@@ -105,21 +119,19 @@ function MenuPage() {
 
     const channel = supabase.channel('menu-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => fetchMenu())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ingredients' }, () => fetchMenu()) // Ενημέρωση και όταν αλλάζει κάτι στα υλικά
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // ΛΥΣΗ ΓΙΑ ΤΟ HASH (Redirect από το Menu Preview): 
-  // Εκτελείται ΜΟΝΟ όταν έχουν γεμίσει οι κατηγορίες (categories.length > 0)
   useEffect(() => {
     if (categories.length > 0 && !hashHandled.current) {
-      if (!active) setActive(categories[0].id); // Ορισμός πρώτου active αν δεν υπάρχει hash
+      if (!active) setActive(categories[0].id);
 
       const hash = window.location.hash;
       if (hash) {
         const id = hash.replace('#', '');
-        // Δίνουμε 100ms χρόνο στον Browser να κάνει render τα divs πριν προσπαθήσει να τα βρει
         setTimeout(() => {
           const el = document.getElementById(id);
           if (el) {
@@ -130,11 +142,10 @@ function MenuPage() {
           }
         }, 100);
       }
-      hashHandled.current = true; // Το κλειδώνουμε για να μην ξανατρέξει
+      hashHandled.current = true; 
     }
   }, [categories]);
 
-  // Observer για το Scroll Tracking
   useEffect(() => {
     if (categories.length === 0) return;
     const visibleSections = new Set<string>();
@@ -163,8 +174,6 @@ function MenuPage() {
     return () => obs.disconnect();
   }, [categories, active]);
 
-  // ΛΥΣΗ ΓΙΑ ΤΟ NAV BAR BUG:
-  // Δεν κάνει scroll ασταμάτητα. Ελέγχει αν το κουμπί βγήκε εκτός οθόνης και ΜΟΝΟ τότε το φέρνει στο κέντρο.
   useEffect(() => {
     const container = pillsRef.current;
     const activePill = container?.querySelector(`[data-cat="${active}"]`) as HTMLElement;
@@ -181,16 +190,13 @@ function MenuPage() {
     }
   }, [active]);
 
-  // Όταν ο χρήστης πατάει μια κατηγορία
   const go = (id: string) => {
-    // Αν πατήσει γρήγορα 2-3 φορές, μηδενίζουμε το παλιό timeout για να μην μπερδευτεί το Observer
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     
     isClickScrolling.current = true;
     setActive(id);
     scrollToSection(id);
     
-    // Αναγκάζουμε το pill να κεντράρει άμεσα στο κλικ
     pillsRef.current?.querySelector(`[data-cat="${id}"]`)?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
 
     scrollTimeoutRef.current = setTimeout(() => {
@@ -239,14 +245,17 @@ function MenuPage() {
               {c.items.map((item) => {
                 const isUnavailable = item.status === 'UNAVAILABLE_TODAY' || item.status === 'UNAVAILABLE' || item.status === 'HIDDEN';
                 
-                // ΝΕΟ: Υπολογισμός ποσότητας του συγκεκριμένου πιάτου στο καλάθι
                 const itemQty = lines.filter((l) => l.itemId === item.id).reduce((sum, l) => sum + l.qty, 0);
                 const hasItem = itemQty > 0;
+
+                // Βρίσκουμε ποια υλικά λείπουν
+                const missingIngs = item.ingredients.filter(ing => 
+                  ingredientStatuses[ing] === 'UNAVAILABLE' || ingredientStatuses[ing] === 'UNAVAILABLE_TODAY'
+                );
 
                 return (
                   <article 
                     key={item.id} 
-                    // ΝΕΟ: Δυναμικό class για το μπορντό περίγραμμα (border-primary και ring)
                     className={`flex flex-col justify-between rounded-2xl border p-5 transition-all ${
                       isUnavailable ? 'opacity-60 grayscale-[50%] border-border bg-card' : 
                       hasItem ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5' : 'border-border bg-card'
@@ -255,7 +264,6 @@ function MenuPage() {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         
-                        {/* ΝΕΟ: Τίτλος & Δυναμικές Κατσαρόλες */}
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-lg font-bold">{item.name}</h3>
                           {hasItem && (
@@ -277,7 +285,15 @@ function MenuPage() {
                           </span>
                         )}
                       </div>
+                      
                       {item.description && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
+                      
+                      {/* Εμφάνιση των εξαντλημένων υλικών με κόκκινα γράμματα */}
+                      {missingIngs.length > 0 && !isUnavailable && (
+                        <p className="mt-2 text-[11px] font-semibold text-destructive">
+                          ⚠️ Χωρίς: <span className="font-bold">{missingIngs.join(", ")}</span>
+                        </p>
+                      )}
                     </div>
                     
                     <div className="mt-5 flex flex-col gap-2">
