@@ -135,7 +135,7 @@ function MenuPage() {
 
   useEffect(() => {
     if (categories.length > 0 && !hashHandled.current) {
-      if (!active) setActive(categories[0].id);
+      if (!active && categories[0]) setActive(categories[0].id);
 
       const hash = window.location.hash;
       if (hash) {
