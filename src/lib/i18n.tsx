@@ -7,7 +7,7 @@ const dictionary = {
   el: {
     menuTitle: "Το μενού μας",
     menuSubtitle: "ScanEat Menu",
-    loading: "Φόρτωση Καταλόγου...",
+    loading: "Φόρτωση Καταλόγου....",
     add: "Προσθήκη",
     portion: "Μερίδα:",
     individual: "Ατομικό:",

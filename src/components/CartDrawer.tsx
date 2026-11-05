@@ -17,7 +17,7 @@ const drawerTranslations = {
   el: {
     cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση",
     empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
-    name: "Ονοματεπώνυμο *", namePh: "π.χ. Γιώργος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000",
+    name: "Ονοματεπώνυμο *", namePh: "π.χ. Νίκος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000",
     address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος",
     bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
     payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα",

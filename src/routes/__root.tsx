@@ -36,7 +36,7 @@ function NotFoundComponent() {
             to="/"
             className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Επιστροφή στην Αρχική
+            Επιστροφή στην Αρχική Σελίδα
           </Link>
         </div>
       </div>
