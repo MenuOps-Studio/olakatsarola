@@ -4,8 +4,17 @@ type Language = "el" | "en" | "bg";
 
 const dictionary = {
   el: {
+<<<<<<< HEAD
     menuTitle: "Το μενού μας", menuSubtitle: "ScanEat Menu", loading: "Φόρτωση Καταλόγου...",
     add: "Προσθήκη", portion: "Μερίδα:", individual: "Ατομικό:",
+=======
+    menuTitle: "Το μενού μας",
+    menuSubtitle: "ScanEat Menu",
+    loading: "Φόρτωση Καταλόγου....",
+    add: "Προσθήκη",
+    portion: "Μερίδα:",
+    individual: "Ατομικό:",
+>>>>>>> 86f594ddd402a8e3ee359ca1dacda17d04da9945
     ingredientsLabel: "Υλικά · αποεπιλέξτε όσα δεν θέλετε",
     specialInstructions: "Ειδικές Οδηγίες (Προαιρετικό)", instructionsPlaceholder: "π.χ. Χωρίς πολύ αλάτι, καλοψημένο...",
     update: "Ενημέρωση", soldOut: "Εξαντληθηκε", tempMissing: "⚠️ Χωρίς:",

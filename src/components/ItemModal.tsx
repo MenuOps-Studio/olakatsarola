@@ -172,7 +172,7 @@ export function ItemModal({
                 onClick={() => {
                   if (editLine) {
                     updateLine(editLine.key, item, removed, qty, note);
-                    const toastUpdated = lang === 'en' ? "Changes saved" : lang === 'bg' ? "Промените са запазени" : "Οι αλλαγές αποθηκεύτηκαν";
+                    const toastUpdated = lang === 'en' ? "Changes saved" : lang === 'bg' ? "Промените са запазени" : "Οι αλλαγές σου αποθηκεύτηκαν";
                     toast.success(toastUpdated);
                   } else {
                     add(item, removed, qty, note);

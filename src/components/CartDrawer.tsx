@@ -12,11 +12,33 @@ type Step = "cart" | "checkout" | "redirect" | "tracking";
 
 const drawerTranslations = {
   el: {
+<<<<<<< HEAD
     cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση", empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
     name: "Ονοματεπώνυμο *", namePh: "π.χ. Γιώργος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000", address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος", bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
     payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα", vivaInfo: "Θα μεταφερθείτε με ασφάλεια στο Viva Wallet Smart Checkout.", termsPre: "Έχω διαβάσει και αποδέχομαι τους", termsLink: "Όρους Χρήσης", and: "και την", privacyLink: "Πολιτική Απορρήτου",
     submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…", dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
     cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.", statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.", statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!", statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.", statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου", toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!", toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.", errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.", errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά."
+=======
+    cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση",
+    empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
+    name: "Ονοματεπώνυμο *", namePh: "π.χ. Νίκος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000",
+    address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος",
+    bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
+    payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα",
+    vivaInfo: "Θα μεταφερθείτε με ασφάλεια στο Viva Wallet Smart Checkout.",
+    termsPre: "Έχω διαβάσει και αποδέχομαι τους", termsLink: "Όρους Χρήσης", and: "και την", privacyLink: "Πολιτική Απορρήτου",
+    submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…",
+    dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
+    cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.",
+    statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.",
+    statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!",
+    statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.",
+    statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου",
+    toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!",
+    toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.",
+    errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.",
+    errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά."
+>>>>>>> 86f594ddd402a8e3ee359ca1dacda17d04da9945
   },
   en: {
     cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking", empty: "Your cart is empty", without: "Without", total: "Total", continue: "Continue to Checkout",
