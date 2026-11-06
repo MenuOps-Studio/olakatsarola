@@ -1,89 +1,43 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, CheckCircle, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useCart, type CartLine } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
 import { ItemModal } from "@/components/ItemModal";
 import { supabase } from "@/lib/supabase";
-
-// ΝΕΟ: Εισαγωγή του i18n
 import { useI18n } from "@/lib/i18n";
 
 type Step = "cart" | "checkout" | "redirect" | "tracking";
 
-// Τοπικό Λεξικό για το CartDrawer
 const drawerTranslations = {
   el: {
-    cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση",
-    empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
-    name: "Ονοματεπώνυμο *", namePh: "π.χ. Γιώργος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000",
-    address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος",
-    bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
-    payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα",
-    vivaInfo: "Θα μεταφερθείτε με ασφάλεια στο Viva Wallet Smart Checkout.",
-    termsPre: "Έχω διαβάσει και αποδέχομαι τους", termsLink: "Όρους Χρήσης", and: "και την", privacyLink: "Πολιτική Απορρήτου",
-    submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…",
-    dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
-    cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.",
-    statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.",
-    statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!",
-    statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.",
-    statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου",
-    toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!",
-    toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.",
-    errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.",
-    errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά."
+    cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση", empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
+    name: "Ονοματεπώνυμο *", namePh: "π.χ. Γιώργος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000", address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος", bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
+    payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα", vivaInfo: "Θα μεταφερθείτε με ασφάλεια στο Viva Wallet Smart Checkout.", termsPre: "Έχω διαβάσει και αποδέχομαι τους", termsLink: "Όρους Χρήσης", and: "και την", privacyLink: "Πολιτική Απορρήτου",
+    submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…", dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
+    cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.", statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.", statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!", statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.", statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου", toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!", toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.", errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.", errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά."
   },
   en: {
-    cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking",
-    empty: "Your cart is empty", without: "Without", total: "Total", continue: "Continue to Checkout",
-    name: "Full Name *", namePh: "e.g. John Doe", phone: "Phone Number *", phonePh: "e.g. 6900000000",
-    address: "Delivery Address *", addressPh: "Street and number", floor: "Floor", floorPh: "e.g. 2nd",
-    bell: "Bell", bellPh: "e.g. Doe", comments: "Comments", commentsPh: "Additional instructions (optional)",
-    payment: "Payment Method", cash: "Cash on Delivery", card: "Credit/Debit Card",
-    vivaInfo: "You will be securely redirected to Viva Wallet Smart Checkout.",
-    termsPre: "I have read and accept the", termsLink: "Terms of Use", and: "and the", privacyLink: "Privacy Policy",
-    submitViva: "Pay with Viva Wallet", submitOrder: "Submit Order", redirecting: "Redirecting to Viva Wallet Smart Checkout…",
-    dontClose: "Please do not close this window.", orderSent: "Order Sent!", trackNum: "Tracking number",
-    cancelTitle: "Order Cancelled", cancelDesc: "The restaurant is unable to fulfill your order at this time.",
-    statusWaiting: "Received", statusWaitingDesc: "The restaurant is reviewing your order.",
-    statusPrep: "Preparing", statusPrepDesc: "Your meal is being cooked!",
-    statusReady: "Ready", statusReadyDesc: "Waiting for the courier to pick it up.",
-    statusComp: "On the Way", statusCompDesc: "Arriving shortly!", closeWindow: "Close window",
-    toastPrep: "Your order is now in the kitchen!", toastReady: "Your order is ready and waiting for the courier!",
-    toastComp: "The courier has picked up your order! It's on the way!", toastCancel: "Your order was cancelled by the restaurant.",
-    errName: "Name must be at least 3 characters long.", errAddress: "Please provide a delivery address.",
-    errPhone: "Phone must consist of exactly 10 digits.", errGeneral: "There was a problem with your order. Please try again."
+    cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking", empty: "Your cart is empty", without: "Without", total: "Total", continue: "Continue to Checkout",
+    name: "Full Name *", namePh: "e.g. John Doe", phone: "Phone Number *", phonePh: "e.g. 6900000000", address: "Delivery Address *", addressPh: "Street and number", floor: "Floor", floorPh: "e.g. 2nd", bell: "Bell", bellPh: "e.g. Doe", comments: "Comments", commentsPh: "Additional instructions (optional)",
+    payment: "Payment Method", cash: "Cash on Delivery", card: "Credit/Debit Card", vivaInfo: "You will be securely redirected to Viva Wallet Smart Checkout.", termsPre: "I have read and accept the", termsLink: "Terms of Use", and: "and the", privacyLink: "Privacy Policy",
+    submitViva: "Pay with Viva Wallet", submitOrder: "Submit Order", redirecting: "Redirecting to Viva Wallet Smart Checkout…", dontClose: "Please do not close this window.", orderSent: "Order Sent!", trackNum: "Tracking number",
+    cancelTitle: "Order Cancelled", cancelDesc: "The restaurant is unable to fulfill your order at this time.", statusWaiting: "Received", statusWaitingDesc: "The restaurant is reviewing your order.", statusPrep: "Preparing", statusPrepDesc: "Your meal is being cooked!", statusReady: "Ready", statusReadyDesc: "Waiting for the courier to pick it up.", statusComp: "On the Way", statusCompDesc: "Arriving shortly!", closeWindow: "Close window", toastPrep: "Your order is now in the kitchen!", toastReady: "Your order is ready and waiting for the courier!", toastComp: "The courier has picked up your order! It's on the way!", toastCancel: "Your order was cancelled by the restaurant.", errName: "Name must be at least 3 characters long.", errAddress: "Please provide a delivery address.", errPhone: "Phone must consist of exactly 10 digits.", errGeneral: "There was a problem with your order. Please try again."
   },
   bg: {
-    cartHeader: "ScanEat Количка", checkoutHeader: "Завършване", trackingHeader: "Проследяване",
-    empty: "Количката ви е празна", without: "Без", total: "Общо", continue: "Продължи към поръчка",
-    name: "Име и Фамилия *", namePh: "напр. Иван Иванов", phone: "Телефон *", phonePh: "напр. 6900000000",
-    address: "Адрес за доставка *", addressPh: "Улица и номер", floor: "Етаж", floorPh: "напр. 2-ри",
-    bell: "Звънец", bellPh: "напр. Иванов", comments: "Коментари", commentsPh: "Допълнителни инструкции (по избор)",
-    payment: "Начин на плащане", cash: "Наложен платеж", card: "Кредитна/Дебитна карта",
-    vivaInfo: "Ще бъдете пренасочени сигурно към Viva Wallet Smart Checkout.",
-    termsPre: "Прочетох и приемам", termsLink: "Условията за ползване", and: "и", privacyLink: "Политиката за поверителност",
-    submitViva: "Плати с Viva Wallet", submitOrder: "Изпрати поръчка", redirecting: "Пренасочване към Viva Wallet Smart Checkout…",
-    dontClose: "Моля, не затваряйте този прозорец.", orderSent: "Поръчката е изпратена!", trackNum: "Номер за проследяване",
-    cancelTitle: "Поръчката е отменена", cancelDesc: "В момента ресторантът не може да изпълни вашата поръчка.",
-    statusWaiting: "Получена", statusWaitingDesc: "Ресторантът преглежда вашата поръчка.",
-    statusPrep: "Приготвя се", statusPrepDesc: "Ястието ви се готви!",
-    statusReady: "Готова", statusReadyDesc: "Чака куриера да я вземе.",
-    statusComp: "На път", statusCompDesc: "Пристига скоро!", closeWindow: "Затвори прозореца",
-    toastPrep: "Поръчката ви е в кухнята!", toastReady: "Поръчката ви е готова и чака куриера!",
-    toastComp: "Куриерът взе поръчката ви! Тя е на път!", toastCancel: "Поръчката ви беше отменена от ресторанта.",
-    errName: "Името трябва да съдържа поне 3 знака.", errAddress: "Моля, въведете адрес за доставка.",
-    errPhone: "Телефонът трябва да съдържа точно 10 цифри.", errGeneral: "Възникна проблем с поръчката ви. Моля, опитайте отново."
+    cartHeader: "ScanEat Количка", checkoutHeader: "Завършване", trackingHeader: "Проследяване", empty: "Количката ви е празна", without: "Без", total: "Общо", continue: "Продължи към поръчка",
+    name: "Име и Фамилия *", namePh: "напр. Иван Иванов", phone: "Телефон *", phonePh: "напр. 6900000000", address: "Адрес за доставка *", addressPh: "Улица и номер", floor: "Етаж", floorPh: "напр. 2-ри", bell: "Звънец", bellPh: "напр. Иванов", comments: "Коментари", commentsPh: "Допълнителни инструкции (по избор)",
+    payment: "Начин на плащане", cash: "Наложен платеж", card: "Кредитна/Дебитна карта", vivaInfo: "Ще бъдете пренасочени сигурно към Viva Wallet Smart Checkout.", termsPre: "Прочетох и приемам", termsLink: "Условията за ползване", and: "и", privacyLink: "Политиката за поверителност",
+    submitViva: "Плати с Viva Wallet", submitOrder: "Изпрати поръчка", redirecting: "Пренасочване към Viva Wallet Smart Checkout…", dontClose: "Моля, не затваряйте този прозорец.", orderSent: "Поръчката е изпратена!", trackNum: "Номер за проследяване",
+    cancelTitle: "Поръчката е отменена", cancelDesc: "В момента ресторантът не може да изпълни вашата поръчка.", statusWaiting: "Получена", statusWaitingDesc: "Ресторантът преглежда вашата поръчка.", statusPrep: "Приготвя се", statusPrepDesc: "Ястието ви се готви!", statusReady: "Готова", statusReadyDesc: "Чака куриера да я вземе.", statusComp: "На път", statusCompDesc: "Пристига скоро!", closeWindow: "Затвори прозореца", toastPrep: "Поръчката ви е в кухнята!", toastReady: "Поръчката ви е готова и чака куриера!", toastComp: "Куриерът взе поръчката ви! Тя е на път!", toastCancel: "Поръчката ви беше отменена от ресторанта.", errName: "Името трябва да съдържа поне 3 знака.", errAddress: "Моля, въведете адрес за доставка.", errPhone: "Телефонът трябва да съдържа точно 10 цифри.", errGeneral: "Възникна проблем с поръчката ви. Моля, опитайте отново."
   }
 };
 
 export function CartDrawer() {
   const { open, setOpen, lines, total, setQty, clear } = useCart();
-  const { lang, getLocalizedField } = useI18n(); // ΝΕΟ: Εγκέφαλος Γλωσσών
+  const { lang, getLocalizedField } = useI18n(); 
   
-  // Βοηθητική συνάρτηση μετάφρασης για το Drawer
   const t = (key: keyof typeof drawerTranslations.el) => drawerTranslations[lang][key] || drawerTranslations.el[key];
 
   const [step, setStep] = useState<Step>("cart");
@@ -99,9 +53,8 @@ export function CartDrawer() {
   const [editingLine, setEditingLine] = useState<CartLine | null>(null);
   const [trackingId, setTrackingId] = useState<number | null>(null);
   const [orderStatus, setOrderStatus] = useState<string>("WAITING");
-  const [ingredientDataMap, setIngredientDataMap] = useState<Record<string, any>>({}); // Για μετάφραση των αφαρεθέντων υλικών
+  const [ingredientDataMap, setIngredientDataMap] = useState<Record<string, any>>({});
 
-  // Φορτώνουμε τα υλικά για να τα μεταφράζουμε στο καλάθι (Χωρίς Κρεμμύδι -> Without Onion)
   useEffect(() => {
     const fetchIngs = async () => {
       const { data } = await supabase.from('ingredients').select('*').eq('restaurant_id', 5);
@@ -148,44 +101,29 @@ export function CartDrawer() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (name.trim().length < 3) { toast.error(t('errName')); return; }
     if (!address.trim()) { toast.error(t('errAddress')); return; }
     if (!/^\d{10}$/.test(phone)) { toast.error(t('errPhone')); return; }
-
     setIsSubmitting(true);
-
     try {
       const { data: restData, error: restError } = await supabase.from("restaurants").select("id").eq("slug", "ola-katsarola").single();
       if (restError || !restData) throw new Error("Δεν βρέθηκε το εστιατόριο");
 
-      // Τα δεδομένα που στέλνουμε στη Βάση παραμένουν ΕΛΛΗΝΙΚΑ για την κουζίνα!
       const formattedItems = lines.map(line => ({
-        id: line.itemId,
-        name: line.name, // Το line.name είναι το ελληνικό, το displayName είναι μόνο για UI
-        price: line.price,
-        quantity: line.qty,
-        removedIngredients: line.removed, // Ελληνικά υλικά
-        itemNote: line.note || "" // ΔΙΟΡΘΩΣΗ: Περνάμε το σχόλιο του πελάτη στη βάση
+        id: line.itemId, name: line.name, price: line.price, quantity: line.qty,
+        removedIngredients: line.removed, itemNote: line.note || "" 
       }));
 
-      const orderNotes = [
-        floor && `Όροφος: ${floor}`,
-        bell && `Κουδούνι: ${bell}`,
-        comments && `${comments}`
-      ].filter(Boolean).join(" | ");
+      const orderNotes = [ floor && `Όροφος: ${floor}`, bell && `Κουδούνι: ${bell}`, comments && `${comments}` ].filter(Boolean).join(" | ");
 
       const { data: newOrder, error } = await supabase.from("orders").insert({
-        restaurant_id: restData.id, order_type: "DELIVERY", customer_last_name: name,
-        customer_phone: phone, customer_address: address, table_number: "Πακέτο",
+        restaurant_id: restData.id, order_type: "DELIVERY", customer_last_name: name, customer_phone: phone, customer_address: address, table_number: "Πακέτο",
         notes: orderNotes, items: formattedItems, total_amount: total,
-        payment_method: payment === "card" ? "CARD" : "CASH",
-        payment_status: payment === "card" ? "PENDING" : "UNPAID",
+        payment_method: payment === "card" ? "CARD" : "CASH", payment_status: payment === "card" ? "PENDING" : "UNPAID",
         prep_status: "WAITING", created_at: new Date().toISOString()
       }).select("id, prep_status").single();
 
       if (error) throw error;
-
       localStorage.setItem('lastOrderId', newOrder.id.toString());
       
       const savedOrders = localStorage.getItem("scaneat_active_orders");
@@ -193,7 +131,6 @@ export function CartDrawer() {
       if (savedOrders) { try { activeList = JSON.parse(savedOrders); } catch (e) { activeList = []; } }
       activeList.push(newOrder.id);
       localStorage.setItem("scaneat_active_orders", JSON.stringify(activeList));
-      
       window.dispatchEvent(new Event("scaneat_new_order_added"));
 
       if (payment === "card") {
@@ -205,7 +142,6 @@ export function CartDrawer() {
         window.location.href = `https://demo.vivapayments.com/web/checkout?ref=${vivaData.orderCode}`;
         return; 
       }
-      
       setTrackingId(newOrder.id);
       setOrderStatus(newOrder.prep_status);
       clear();
@@ -214,16 +150,13 @@ export function CartDrawer() {
       console.error("Σφάλμα καταχώρησης:", err);
       toast.error(t('errGeneral'));
       setStep("cart");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
   const getStepStatus = (stepName: string) => {
     const order = ["WAITING", "PREPARING", "READY", "COMPLETED"];
     const currentIndex = order.indexOf(orderStatus);
     const stepIndex = order.indexOf(stepName);
-    
     if (orderStatus === "CANCELLED") return "cancelled";
     if (stepIndex < currentIndex) return "completed";
     if (stepIndex === currentIndex) return "active";
@@ -236,18 +169,11 @@ export function CartDrawer() {
         {open && (
           <>
             <motion.div className="fixed inset-0 z-50 bg-ink/50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
-            <motion.aside
-              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-background shadow-soft"
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            >
+            <motion.aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-background shadow-soft" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}>
               <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-5">
                 <div className="flex items-center gap-2">
-                  {step === "checkout" && (
-                    <button onClick={() => setStep("cart")} aria-label="Πίσω" className="-ml-2 flex h-10 w-10 items-center justify-center"><ArrowLeft className="h-5 w-5" /></button>
-                  )}
-                  <h2 className="text-xl font-bold">
-                    {step === "checkout" ? t('checkoutHeader') : step === "tracking" ? t('trackingHeader') : t('cartHeader')}
-                  </h2>
+                  {step === "checkout" && <button onClick={() => setStep("cart")} aria-label="Πίσω" className="-ml-2 flex h-10 w-10 items-center justify-center"><ArrowLeft className="h-5 w-5" /></button>}
+                  <h2 className="text-xl font-bold">{step === "checkout" ? t('checkoutHeader') : step === "tracking" ? t('trackingHeader') : t('cartHeader')}</h2>
                 </div>
                 <button onClick={close} aria-label="Κλείσιμο" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted hover:bg-border transition-colors"><X className="h-5 w-5" /></button>
               </div>
@@ -263,32 +189,18 @@ export function CartDrawer() {
                     ) : (
                       <ul className="divide-y divide-border">
                         {lines.map((l) => {
-                          // Ανάκτηση μεταφρασμένου ονόματος με προτεραιότητα στο rawItem της βάσης
                           let displayItemName = "";
-                          const sourceData = l.rawItem || l;
+                          const sourceData = (l.rawItem || l) as any;
 
-                          if (lang === 'en') {
-                            displayItemName = sourceData.name_en || sourceData.raw?.name_en || l.name;
-                          } else if (lang === 'bg') {
-                            displayItemName = sourceData.name_bg || sourceData.raw?.name_bg || l.name;
-                          } else {
-                            displayItemName = sourceData.name_el || sourceData.raw?.name || l.name;
-                          }
+                          if (lang === 'en') displayItemName = sourceData.name_en || sourceData.raw?.name_en || l.name;
+                          else if (lang === 'bg') displayItemName = sourceData.name_bg || sourceData.raw?.name_bg || l.name;
+                          else displayItemName = sourceData.name_el || sourceData.raw?.name || l.name;
 
-                          // Καθαρισμός τυχόν διπλών καταλήξεων
-                          displayItemName = displayItemName
-                            .replace(" (Ατομικό)", "").replace(" (Μερίδα)", "")
-                            .replace(" (Portion)", "").replace(" (Individual)", "")
-                            .replace(" (Единична)", "").replace(" (Порция)", "");
+                          displayItemName = displayItemName.replace(" (Ατομικό)", "").replace(" (Μερίδα)", "").replace(" (Portion)", "").replace(" (Individual)", "").replace(" (Единична)", "").replace(" (Порция)", "");
 
-                          // Προσθήκη σωστής κατάληξης ανάλογα με τη γλώσσα και τον τύπο μερίδας
-                          if (l.name.includes("(Ατομικό)") || l.name.includes("Единична")) {
-                            displayItemName += lang === 'en' ? " (Individual)" : lang === 'bg' ? " (Единична)" : " (Ατομικό)";
-                          } else if (l.name.includes("(Μερίδα)") || l.name.includes("Порция")) {
-                            displayItemName += lang === 'en' ? " (Portion)" : lang === 'bg' ? " (Порция)" : " (Μερίδα)";
-                          }
+                          if (l.name.includes("(Ατομικό)") || l.name.includes("Единична")) displayItemName += lang === 'en' ? " (Individual)" : lang === 'bg' ? " (Единична)" : " (Ατομικό)";
+                          else if (l.name.includes("(Μερίδα)") || l.name.includes("Порция")) displayItemName += lang === 'en' ? " (Portion)" : lang === 'bg' ? " (Порция)" : " (Μερίδα)";
 
-                          // Μετάφραση αφαρεθέντων υλικών στη γλώσσα του χρήστη
                           const translatedRemoved = l.removed.map(ing => {
                             const ingObj = ingredientDataMap[ing];
                             if (!ingObj) return ing;
@@ -304,11 +216,7 @@ export function CartDrawer() {
                                   <p className="font-semibold group-hover:text-primary transition-colors">{displayItemName}</p>
                                   <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
-                                {l.removed.length > 0 && (
-                                  <p className="mt-1 text-xs text-primary">
-                                    {lang === 'bg' ? "Без: " : lang === 'en' ? "Without: " : "Χωρίς: "}{translatedRemoved.join(", ")}
-                                  </p>
-                                )}
+                                {l.removed.length > 0 && <p className="mt-1 text-xs text-primary">{t('without')}: {translatedRemoved.join(", ")}</p>}
                                 {l.note && <p className="mt-1 text-xs text-muted-foreground italic">"{l.note}"</p>}
                                 <p className="mt-1 text-sm font-medium text-muted-foreground">{formatPrice(l.price * l.qty)}</p>
                               </button>
@@ -328,14 +236,8 @@ export function CartDrawer() {
                     )}
                   </div>
                   <div className="shrink-0 border-t border-border p-5 bg-background">
-                    <div className="mb-4 flex justify-between text-lg font-bold">
-                      <span>{t('total')}</span>
-                      <span>{formatPrice(total)}</span>
-                    </div>
-                    <motion.button
-                      whileTap={{ scale: 0.97 }} disabled={lines.length === 0} onClick={() => setStep("checkout")}
-                      className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40 transition-colors hover:bg-primary/90"
-                    >
+                    <div className="mb-4 flex justify-between text-lg font-bold"><span>{t('total')}</span><span>{formatPrice(total)}</span></div>
+                    <motion.button whileTap={{ scale: 0.97 }} disabled={lines.length === 0} onClick={() => setStep("checkout")} className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40 transition-colors hover:bg-primary/90">
                       {t('continue')}
                     </motion.button>
                   </div>
@@ -348,10 +250,7 @@ export function CartDrawer() {
                     <label className="block"><span className="mb-2 block text-sm font-medium">{t('name')}</span><input required minLength={3} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('namePh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" /></label>
                     <label className="block">
                       <span className="mb-2 block text-sm font-medium">{t('phone')}</span>
-                      <input required type="tel" pattern="\d{10}" maxLength={10} value={phone} 
-                        onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity(t('errPhone'))}
-                        onChange={(e) => { (e.target as HTMLInputElement).setCustomValidity(""); setPhone(e.target.value.replace(/\D/g, '')); }} 
-                        placeholder={t('phonePh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
+                      <input required type="tel" pattern="\d{10}" maxLength={10} value={phone} onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity(t('errPhone'))} onChange={(e) => { (e.target as HTMLInputElement).setCustomValidity(""); setPhone(e.target.value.replace(/\D/g, '')); }} placeholder={t('phonePh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                     </label>
                     <label className="block"><span className="mb-2 block text-sm font-medium">{t('address')}</span><input required value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('addressPh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" /></label>
                     <div className="grid grid-cols-2 gap-4">
@@ -362,7 +261,6 @@ export function CartDrawer() {
                       <span className="mb-2 flex justify-between text-sm font-medium"><span>{t('comments')}</span><span className="text-muted-foreground text-xs">{comments.length}/50</span></span>
                       <input value={comments} onChange={(e) => setComments(e.target.value)} maxLength={50} placeholder={t('commentsPh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                     </label>
-                    
                     <div>
                       <span className="mb-2 block text-sm font-medium">{t('payment')}</span>
                       <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted p-1">
@@ -373,17 +271,14 @@ export function CartDrawer() {
                       {payment === "card" && <p className="mt-2 text-xs text-muted-foreground">{t('vivaInfo')}</p>}
                     </div>
                   </div>
-
                   <div className="shrink-0 border-t border-border p-5 bg-background shadow-lg">
                     <div className="mb-3 flex justify-between text-lg font-bold"><span>{t('total')}</span><span>{formatPrice(total)}</span></div>
-                    
                     <label className="mb-4 flex items-start gap-3 cursor-pointer">
                       <input type="checkbox" required checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-input text-primary focus:ring-primary" />
                       <span className="text-[11px] text-muted-foreground leading-snug">
                         {t('termsPre')} <a href="/terms" target="_blank" className="text-primary underline hover:text-primary/80">{t('termsLink')}</a> {t('and')} <a href="/privacy" target="_blank" className="text-primary underline hover:text-primary/80">{t('privacyLink')}</a>.
                       </span>
                     </label>
-
                     <button disabled={isSubmitting || !acceptedTerms} type="submit" className="flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-primary/90">
                       {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : (payment === "card" ? t('submitViva') : t('submitOrder'))}
                     </button>
@@ -405,7 +300,6 @@ export function CartDrawer() {
                     <p className="font-display text-2xl font-bold text-ink">{t('orderSent')}</p>
                     <p className="text-sm text-muted-foreground mt-2">{t('trackNum')}: #{trackingId}</p>
                   </div>
-
                   {orderStatus === "CANCELLED" ? (
                     <div className="flex flex-col items-center justify-center p-6 bg-red-50 rounded-2xl border border-red-100 text-center">
                       <X className="h-12 w-12 text-red-500 mb-3" />
@@ -433,9 +327,7 @@ export function CartDrawer() {
                     </div>
                   )}
                   <div className="mt-auto pt-8">
-                    <button onClick={() => { setStep("cart"); setOpen(false); setTrackingId(null); }} className="h-12 w-full rounded-full bg-ink font-semibold text-ink-foreground hover:bg-primary transition-colors">
-                      {t('closeWindow')}
-                    </button>
+                    <button onClick={() => { setStep("cart"); setOpen(false); setTrackingId(null); }} className="h-12 w-full rounded-full bg-ink font-semibold text-ink-foreground hover:bg-primary transition-colors">{t('closeWindow')}</button>
                   </div>
                 </div>
               )}
@@ -446,4 +338,4 @@ export function CartDrawer() {
       <ItemModal item={editingLine?.rawItem || null} editLine={editingLine} onClose={() => setEditingLine(null)} />
     </>
   );
-}
+} 

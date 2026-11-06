@@ -7,8 +7,6 @@ import { CAT_IMAGES, formatPrice, type MenuItem, type Category } from "@/lib/men
 import { supabase } from "@/lib/supabase";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { useCart } from "@/lib/cart";
-
-// ΝΕΟ: Εισαγωγή του i18n
 import { useI18n } from "@/lib/i18n"; 
 
 export const Route = createFileRoute("/menu")({
@@ -39,8 +37,6 @@ function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MenuItem | null>(null);
   const [active, setActive] = useState("");
-  
-  // ΝΕΟ: Αντί για Record<string, string> κρατάμε ΟΛΟ το αντικείμενο του υλικού για να έχουμε τις μεταφράσεις του
   const [ingredientsMap, setIngredientsMap] = useState<Record<string, any>>({}); 
   
   const pillsRef = useRef<HTMLDivElement>(null);
@@ -49,13 +45,10 @@ function MenuPage() {
   const hashHandled = useRef(false);
 
   const { lines } = useCart();
-  
-  // ΝΕΟ: Χρήση του i18n
   const { t, getLocalizedField } = useI18n();
 
  useEffect(() => {
     async function fetchMenu() {
-      // 1. Φέρνουμε ΟΛΑ τα δεδομένα των υλικών (μαζί με τα name_en, name_bg)
       const { data: ingData } = await supabase
         .from('ingredients')
         .select('*')
@@ -67,7 +60,6 @@ function MenuPage() {
         setIngredientsMap(ingMap);
       }
 
-      // 2. Φέρνουμε τα πιάτα του μενού (μαζί με name_en, description_en κλπ)
       const { data, error } = await supabase
         .from('menu_items')
         .select('*, restaurants!inner(slug)')
@@ -106,7 +98,7 @@ function MenuPage() {
           ingredients: ings,
           status: item.status,
           sort_order: item.sort_order,
-          raw: item // ΝΕΟ: Αποθηκεύουμε τα raw data της βάσης για να τα διαβάσει ο "εγκέφαλος" των μεταφράσεων
+          raw: item 
         } as any);
         
         return acc;
@@ -135,7 +127,7 @@ function MenuPage() {
 
   useEffect(() => {
     if (categories.length > 0 && !hashHandled.current) {
-      if (!active) setActive(categories[0].id);
+      if (!active && categories[0]) setActive(categories[0].id);
 
       const hash = window.location.hash;
       if (hash) {
@@ -189,9 +181,7 @@ function MenuPage() {
     if (container && activePill) {
       const containerRect = container.getBoundingClientRect();
       const pillRect = activePill.getBoundingClientRect();
-
       const isOutOfView = pillRect.left < containerRect.left || pillRect.right > containerRect.right;
-
       if (isOutOfView) {
         activePill.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
       }
@@ -226,7 +216,6 @@ function MenuPage() {
       <div className="glass sticky top-16 z-30 mt-6 border-y border-border/60 shadow-sm">
         <div ref={pillsRef} className="no-scrollbar mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3">
           {categories.map((c) => {
-            // ΝΕΟ: Μεταφρασμένο όνομα κατηγορίας
             const firstItemRaw = (c.items[0] as any)?.raw || {};
             const displayCatName = getLocalizedField(firstItemRaw, 'category') || c.name;
 
@@ -262,16 +251,11 @@ function MenuPage() {
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {c.items.map((item: any) => {
                   const isUnavailable = item.status === 'UNAVAILABLE_TODAY' || item.status === 'UNAVAILABLE' || item.status === 'HIDDEN';
-                  
                   const itemQty = lines.filter((l) => l.itemId === item.id).reduce((sum, l) => sum + l.qty, 0);
                   const hasItem = itemQty > 0;
-
-                  // Βρίσκουμε ποια υλικά λείπουν
                   const missingIngs = item.ingredients.filter((ing: string) => 
                     ingredientsMap[ing]?.status === 'UNAVAILABLE' || ingredientsMap[ing]?.status === 'UNAVAILABLE_TODAY'
                   );
-
-                  // ΝΕΟ: Μεταφρασμένο όνομα και περιγραφή πιάτου
                   const displayName = getLocalizedField(item.raw, 'name') || item.name;
                   const displayDesc = getLocalizedField(item.raw, 'description') || item.description;
 
@@ -285,7 +269,6 @@ function MenuPage() {
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
-                          
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="text-lg font-bold">{displayName}</h3>
                             {hasItem && (
@@ -300,7 +283,6 @@ function MenuPage() {
                               </div>
                             )}
                           </div>
-
                           {isUnavailable && (
                             <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
                               {t('soldOut')}
@@ -310,13 +292,13 @@ function MenuPage() {
                         
                         {displayDesc && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{displayDesc}</p>}
                         
-                        {/* Εμφάνιση των εξαντλημένων υλικών ΜΕΤΑΦΡΑΣΜΕΝΑ */}
+                        {/* ΝΕΟ: Αλλαγή εμφάνισης στα ελλιπή υλικά */}
                         {missingIngs.length > 0 && !isUnavailable && (
-                          <p className="mt-2 text-[11px] font-semibold text-destructive">
-                            {t('tempMissing')} <span className="font-bold">
+                          <div className="mt-3 inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive/80">
+                            {t('tempMissing')} <span className="ml-1 font-bold">
                               {missingIngs.map((ing: string) => getLocalizedField(ingredientsMap[ing], 'name') || ing).join(", ")}
                             </span>
-                          </p>
+                          </div>
                         )}
                       </div>
                       
