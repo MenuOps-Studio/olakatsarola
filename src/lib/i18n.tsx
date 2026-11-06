@@ -4,20 +4,11 @@ type Language = "el" | "en" | "bg";
 
 const dictionary = {
   el: {
-<<<<<<< HEAD
     menuTitle: "Το μενού μας", menuSubtitle: "ScanEat Menu", loading: "Φόρτωση Καταλόγου...",
     add: "Προσθήκη", portion: "Μερίδα:", individual: "Ατομικό:",
-=======
-    menuTitle: "Το μενού μας",
-    menuSubtitle: "ScanEat Menu",
-    loading: "Φόρτωση Καταλόγου....",
-    add: "Προσθήκη",
-    portion: "Μερίδα:",
-    individual: "Ατομικό:",
->>>>>>> 86f594ddd402a8e3ee359ca1dacda17d04da9945
     ingredientsLabel: "Υλικά · αποεπιλέξτε όσα δεν θέλετε",
     specialInstructions: "Ειδικές Οδηγίες (Προαιρετικό)", instructionsPlaceholder: "π.χ. Χωρίς πολύ αλάτι, καλοψημένο...",
-    update: "Ενημέρωση", soldOut: "Εξαντληθηκε", tempMissing: "⚠️ Χωρίς:",
+    update: "Ενημέρωση", soldOut: "Εξαντληθηκε", tempMissing: "⚠️ Προσωρινή έλλειψη σε:",
     cartTitle: "Η Παραγγελία σας", emptyCart: "Το καλάθι σας είναι άδειο",
     total: "Σύνολο", checkout: "Αποστολή Παραγγελίας",
   },
@@ -26,7 +17,7 @@ const dictionary = {
     add: "Add", portion: "Portion:", individual: "Individual:",
     ingredientsLabel: "Ingredients · deselect what you don't want",
     specialInstructions: "Special Instructions (Optional)", instructionsPlaceholder: "e.g. No salt, well done...",
-    update: "Update", soldOut: "Sold Out", tempMissing: "⚠️ Without:",
+    update: "Update", soldOut: "Sold Out", tempMissing: "⚠️ Temporarily missing:",
     cartTitle: "Your Order", emptyCart: "Your cart is empty",
     total: "Total", checkout: "Send Order",
   },
@@ -35,7 +26,7 @@ const dictionary = {
     add: "Добави", portion: "Порция:", individual: "Единична:",
     ingredientsLabel: "Съставки · премахнете тези, които не желаете",
     specialInstructions: "Специални инструкции (по избор)", instructionsPlaceholder: "напр. Без сол, добре изпечено...",
-    update: "Обнови", soldOut: "Изчерпано", tempMissing: "⚠️ Без::",
+    update: "Обнови", soldOut: "Изчерпано", tempMissing: "⚠️ Временно липсва:",
     cartTitle: "Вашата поръчка", emptyCart: "Количката ви е празна",
     total: "Общо", checkout: "Изпрати поръчка",
   }
