@@ -2,22 +2,29 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 
-// 6 Εγγυημένα ενεργά links φωτογραφιών (υψηλής ανάλυσης)
+// Εισαγωγή των τοπικών φωτογραφιών από τον φάκελο assets/gallery. 
+// ΣΗΜΑΝΤΙΚΟ: Βεβαιώσου ότι τα ονόματα των αρχείων ταιριάζουν με αυτά που έχεις στον φάκελό σου.
+import img1 from "@/assets/gallery/IMG_7412.jpeg"; 
+import img2 from "@/assets/gallery/IMG_7469.jpeg";
+import img3 from "@/assets/gallery/salad-1.jpeg";
+import img4 from "@/assets/gallery/IMG_7494.jpeg";
+import img5 from "@/assets/gallery/IMG_7536.jpeg";
+import img6 from "@/assets/gallery/IMG_7696.jpeg";
+
 const IMAGES = [
-  { id: 1, src: "https://images.unsplash.com/photo-1544025162-831109a9dbd4?auto=format&fit=crop&q=80&w=1200", title: "Μοσχαράκι Κοκκινιστό", desc: "Λιώνει στο στόμα, με φρέσκο πουρέ." },
-  { id: 2, src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=1200", title: "Ο Χώρος Μας", desc: "Ζεστό, φιλόξενο περιβάλλον." },
-  { id: 3, src: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=1200", title: "Φρέσκες Σαλάτες", desc: "Από ντόπιους παραγωγούς." },
-  { id: 4, src: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1200", title: "Χοιρινά Μπριζολάκια", desc: "Με την παραδοσιακή μας μαρινάδα." },
-  { id: 5, src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200", title: "Παραδοσιακές Γεύσεις", desc: "Συνταγές που περνούν από γενιά σε γενιά." },
-  { id: 6, src: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=1200", title: "Εκλεκτά Κρέατα", desc: "Ποιότητα που ξεχωρίζει σε κάθε μπουκιά." },
+  { id: 1, src: img1, title: "Μοσχαράκι Κοκκινιστό", desc: "Λιώνει στο στόμα, με φρέσκο πουρέ." },
+  { id: 2, src: img2, title: "Ο Χώρος Μας", desc: "Ζεστό, φιλόξενο περιβάλλον." },
+  { id: 3, src: img3, title: "Φρέσκες Σαλάτες", desc: "Από ντόπιους παραγωγούς." },
+  { id: 4, src: img4, title: "Χοιρινά Μπριζολάκια", desc: "Με την παραδοσιακή μας μαρινάδα." },
+  { id: 5, src: img5, title: "Παραδοσιακές Γεύσεις", desc: "Συνταγές που περνούν από γενιά σε γενιά." },
+  { id: 6, src: img6, title: "Εκλεκτά Κρέατα", desc: "Ποιότητα που ξεχωρίζει σε κάθε μπουκιά." },
 ];
 
 export function AnimatedGallery() {
-  const [activeIndex, setActiveIndex] = useState(2); // Ξεκινάμε με εστίαση στη μεσαία φωτογραφία
+  const [activeIndex, setActiveIndex] = useState(2);
 
-  // Λειτουργία Swipe/Drag για κινητά και ποντίκι
   const handleDragEnd = (event: any, info: any) => {
-    const swipeThreshold = 50; // Πόσο πρέπει να σύρει ο χρήστης για να αλλάξει η κάρτα
+    const swipeThreshold = 50; 
     if (info.offset.x > swipeThreshold && activeIndex > 0) {
       setActiveIndex((prev) => prev - 1);
     } else if (info.offset.x < -swipeThreshold && activeIndex < IMAGES.length - 1) {
@@ -31,7 +38,6 @@ export function AnimatedGallery() {
   return (
     <div className="w-full pt-8 pb-10 md:pt-10 md:pb-12 bg-background overflow-hidden flex flex-col items-center">
       
-      {/* Header Ενότητας */}
       <div className="w-full max-w-6xl px-4 md:px-8 mb-12 flex flex-col items-center text-center">
         <div className="flex items-center gap-3">
           <Sparkles className="h-7 w-7 text-primary" />
@@ -42,25 +48,20 @@ export function AnimatedGallery() {
         </p>
       </div>
 
-      {/* 3D Carousel Container */}
-      {/* Η κλάση perspective-[1200px] δίνει την ψευδαίσθηση του βάθους (3D) */}
       <div className="relative w-full max-w-7xl h-[400px] md:h-[550px] flex items-center justify-center perspective-[1200px]">
         <AnimatePresence initial={false}>
           {IMAGES.map((item, index) => {
-            // Υπολογίζουμε πόσο απέχει η κάθε κάρτα από την κεντρική (activeIndex)
             const offset = index - activeIndex;
             const absOffset = Math.abs(offset);
             const isActive = offset === 0;
 
-            // Αν η κάρτα είναι πάνω από 2 θέσεις μακριά, δεν την εμφανίζουμε (για επιδόσεις)
             if (absOffset > 2) return null;
 
-            // Δυναμικές 3D Τιμές (Αλλάζουν αυτόματα στο Swipe/Click)
-            const xOffset = offset * (typeof window !== "undefined" && window.innerWidth < 768 ? 90 : 160); // Πόσο δεξιά/αριστερά πάει
-            const zOffset = absOffset * -150; // Βάθος προς τα πίσω
-            const rotateY = offset * -25; // Γωνία κλίσης
-            const scale = isActive ? 1 : 0.85; // Μέγεθος
-            const opacity = isActive ? 1 : 0.5 - (absOffset * 0.1); // Ξεθώριασμα
+            const xOffset = offset * (typeof window !== "undefined" && window.innerWidth < 768 ? 90 : 160); 
+            const zOffset = absOffset * -150; 
+            const rotateY = offset * -25; 
+            const scale = isActive ? 1 : 0.85; 
+            const opacity = isActive ? 1 : 0.5 - (absOffset * 0.1); 
 
             return (
               <motion.div
@@ -76,7 +77,7 @@ export function AnimatedGallery() {
                   scale: scale,
                   opacity: opacity,
                   zIndex: 20 - absOffset,
-                  filter: isActive ? "blur(0px)" : "blur(4px)" // Οι πλαϊνές θολώνουν
+                  filter: isActive ? "blur(0px)" : "blur(4px)"
                 }}
                 transition={{ type: "spring", stiffness: 220, damping: 25 }}
                 onClick={() => setActiveIndex(index)}
@@ -90,10 +91,8 @@ export function AnimatedGallery() {
                   className="w-full h-full object-cover pointer-events-none" 
                 />
                 
-                {/* Σκοτεινό Overlay για τις μη ενεργές κάρτες */}
                 <div className={`absolute inset-0 bg-black transition-opacity duration-500 ${isActive ? "opacity-0" : "opacity-40"}`} />
                 
-                {/* Κείμενο Κεντρικής Κάρτας */}
                 <motion.div 
                   initial={false}
                   animate={{ 
@@ -112,7 +111,6 @@ export function AnimatedGallery() {
         </AnimatePresence>
       </div>
 
-      {/* Κουμπιά Πλοήγησης (Βελάκια) στο κάτω μέρος */}
       <div className="mt-8 flex items-center gap-6">
         <button 
           onClick={prevSlide}
@@ -123,7 +121,6 @@ export function AnimatedGallery() {
           <ChevronLeft className="h-6 w-6" />
         </button>
 
-        {/* Indicators (Τελίτσες) */}
         <div className="flex gap-2">
           {IMAGES.map((_, i) => (
             <div 

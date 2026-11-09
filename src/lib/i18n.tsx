@@ -21,7 +21,11 @@ const dictionary = {
     emptyCart: "Το καλάθι σας είναι άδειο",
     total: "Σύνολο",
     checkout: "Αποστολή Παραγγελίας",
+    galleryLink: "Γκαλερί",
+    galleryTitle: "Η Γκαλερί μας",
+    gallerySub: "Στιγμές από το εστιατόριό μας",
   },
+
   en: {
     menuTitle: "Our Menu",
     menuSubtitle: "ScanEat Menu",
@@ -39,7 +43,11 @@ const dictionary = {
     emptyCart: "Your cart is empty",
     total: "Total",
     checkout: "Send Order",
+    galleryLink: "Gallery",
+    galleryTitle: "Our Gallery",
+    gallerySub: "Moments from our restaurant",
   },
+
   bg: {
     menuTitle: "Нашето Меню",
     menuSubtitle: "ScanEat Меню",
@@ -57,6 +65,9 @@ const dictionary = {
     emptyCart: "Количката ви е празна",
     total: "Общо",
     checkout: "Изпрати поръчка",
+    galleryLink: "Галерия",
+    galleryTitle: "Нашата галерия",
+    gallerySub: "Моменти от нашия ресторант",
   }
 };
 

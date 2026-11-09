@@ -1,10 +1,7 @@
-import salad from "@/assets/cat-salad.jpg";
-import meat from "@/assets/cat-meat.jpg";
-import soup from "@/assets/cat-soup.jpg";
-import sea from "@/assets/cat-sea.jpg";
-import drinks from "@/assets/cat-drinks.jpg";
-import hero from "@/assets/hero.jpg";
-import about2 from "@/assets/about-2.jpg";
+import salad1 from "@/assets/olakima-1.jpeg";
+import salad2 from "@/assets/rissoto-1.jpeg";
+import salad3 from "@/assets/salad-1.jpeg";
+import salad4 from "@/assets/zymarika-1.jpeg";
 
 export type MenuItem = { 
   id: string; 
@@ -28,10 +25,10 @@ export type Category = {
 export const CAT_IMAGES: Record<string, string[]> = {
 
   "Σαλάτες": [
-    "https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80"
+    salad1,
+    salad2,
+    salad3,
+    salad4
   ],
 
   "Ορεκτικά": [

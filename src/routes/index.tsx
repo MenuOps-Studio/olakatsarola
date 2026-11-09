@@ -36,7 +36,7 @@ function Home() {
         <div className="hero-overlay absolute inset-0 -z-10" />
         <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-32 md:pb-24">
           <motion.p {...fade} className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-ink-foreground/80">
-            Το μαγειρείο των Σερρών
+            Παραδοσιακό Μαγειρείο
           </motion.p>
           <motion.h1 {...fade} className="max-w-3xl text-4xl font-bold leading-[1.1] text-ink-foreground md:text-6xl">
             Ελληνική κουζίνα με πλούσιες γεύσεις και μενού που προσαρμόζονται στις προσωπικές σας προτιμήσεις.
