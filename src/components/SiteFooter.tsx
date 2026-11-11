@@ -29,7 +29,7 @@ export function SiteFooter() {
     <footer className="bg-ink text-ink-foreground">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-3">
         <div>
-          <img src={logo} alt="Όλα Κατσαρόλα" className="h-25 w-auto opacity-90 brightness-0 invert" />
+          <img src={logo} alt="Όλα Κατσαρόλα" className="h-24 w-auto opacity-90 brightness-0 invert" />
           <p className="mt-4 max-w-xs text-sm opacity-80">
             {t.desc1}<br/>{t.desc2}<br/>{t.desc3}
           </p>
@@ -44,10 +44,10 @@ export function SiteFooter() {
         <div>
           <p className="mb-3 text-xs uppercase tracking-widest opacity-50 font-bold">{t.follow}</p>
           <div className="flex gap-3">
-            <a href="https://www.facebook.com/olakatsarola2019?locale=el_GR" target="_blank" rel="noreferrer" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-foreground/20 transition-colors hover:bg-primary hover:border-primary">
+            <a href="https://www.facebook.com/olakatsarola2019?locale=el_GR" target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-foreground/20 transition-colors hover:bg-primary hover:border-primary">
               <Facebook className="h-5 w-5" />
             </a>
-            <a href="https://www.instagram.com/ola_katsarola/" target="_blank" rel="noreferrer" aria-label="Instagram" className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-foreground/20 transition-colors hover:bg-primary hover:border-primary">
+            <a href="https://www.instagram.com/ola_katsarola/" target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-foreground/20 transition-colors hover:bg-primary hover:border-primary">
               <Instagram className="h-5 w-5" />
             </a>
           </div>

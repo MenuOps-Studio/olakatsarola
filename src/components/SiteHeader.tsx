@@ -55,7 +55,6 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-
         <div className="flex items-center gap-1">
           <motion.button whileTap={{ scale: 0.92 }} onClick={() => setOpen(true)} className="relative flex h-11 w-11 items-center justify-center rounded-full bg-ink text-ink-foreground hover:bg-primary transition-colors">
             <ShoppingBag className="h-5 w-5" />
