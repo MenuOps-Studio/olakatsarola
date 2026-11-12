@@ -3,9 +3,10 @@ import {
   Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scripts, type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { CartProvider } from "@/lib/cart";
+import { CartProvider, useCart } from "@/lib/cart";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -70,12 +71,43 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function LanguageSwitcher() {
   const { lang, setLang } = useI18n();
+  const cart = useCart() as any; 
+  const isCartOpen = cart.open || cart.isOpen; 
+
   return (
-    <div className="fixed bottom-4 left-4 z-[90] flex gap-2 rounded-2xl border border-border/50 bg-background/80 p-2 shadow-lg backdrop-blur-md sm:bottom-6 sm:left-6">
-      <button aria-label="Ελληνικά" onClick={() => setLang('el')} className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'el' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}>🇬🇷</button>
-      <button aria-label="English" onClick={() => setLang('en')} className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'en' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}>🇬🇧</button>
-      <button aria-label="Български" onClick={() => setLang('bg')} className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition-all ${lang === 'bg' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}>🇧🇬</button>
-    </div>
+    <AnimatePresence>
+      {!isCartOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          transition={{ duration: 0.2 }}
+          className="fixed bottom-4 left-4 z-[90] flex gap-1 rounded-[1.25rem] border border-border/50 bg-background/90 p-1.5 shadow-lg backdrop-blur-md sm:bottom-6 sm:left-6"
+        >
+          <button 
+            aria-label="Ελληνικά" 
+            onClick={() => setLang('el')} 
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${lang === 'el' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+          >
+            <img src="https://flagcdn.com/gr.svg" alt="GR" className="h-5 w-5 rounded-[2px] object-cover" />
+          </button>
+          <button 
+            aria-label="English" 
+            onClick={() => setLang('en')} 
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${lang === 'en' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+          >
+            <img src="https://flagcdn.com/gb.svg" alt="GB" className="h-5 w-5 rounded-[2px] object-cover" />
+          </button>
+          <button 
+            aria-label="Български" 
+            onClick={() => setLang('bg')} 
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${lang === 'bg' ? 'bg-primary shadow-sm scale-110' : 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:bg-muted'}`}
+          >
+            <img src="https://flagcdn.com/bg.svg" alt="BG" className="h-5 w-5 rounded-[2px] object-cover" />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -92,7 +124,6 @@ function RootComponent() {
           </div>
           <CartDrawer />
           <LiveTracker />
-          <LanguageSwitcher />
           <Toaster position="top-center" />
         </CartProvider>
       </I18nProvider>

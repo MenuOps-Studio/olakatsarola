@@ -1,63 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 
-// Εισαγωγή των τοπικών φωτογραφιών από τον φάκελο assets/gallery. 
-// ΣΗΜΑΝΤΙΚΟ: Βεβαιώσου ότι τα ονόματα των αρχείων ταιριάζουν με αυτά που έχεις στον φάκελό σου.
-import img1 from "@/assets/gallery/IMG_7412.jpeg"; 
-import img2 from "@/assets/gallery/IMG_7469.jpeg";
-import img3 from "@/assets/gallery/salad-1.jpeg";
-import img4 from "@/assets/gallery/IMG_7494.jpeg";
-import img5 from "@/assets/gallery/IMG_7536.jpeg";
-import img6 from "@/assets/gallery/IMG_7696.jpeg";
-
-const IMAGES = [
-  { id: 1, src: img1, title: "Μοσχαράκι Κοκκινιστό", desc: "Λιώνει στο στόμα, με φρέσκο πουρέ." },
-  { id: 2, src: img2, title: "Ο Χώρος Μας", desc: "Ζεστό, φιλόξενο περιβάλλον." },
-  { id: 3, src: img3, title: "Φρέσκες Σαλάτες", desc: "Από ντόπιους παραγωγούς." },
-  { id: 4, src: img4, title: "Χοιρινά Μπριζολάκια", desc: "Με την παραδοσιακή μας μαρινάδα." },
-  { id: 5, src: img5, title: "Παραδοσιακές Γεύσεις", desc: "Συνταγές που περνούν από γενιά σε γενιά." },
-  { id: 6, src: img6, title: "Εκλεκτά Κρέατα", desc: "Ποιότητα που ξεχωρίζει σε κάθε μπουκιά." },
-];
+// Αυτόματη φόρτωση όλων των φωτογραφιών από τον ΚΟΙΝΟ φάκελο (src/assets/home/carousel)
+const imageModules = import.meta.glob<{ default: string }>('@/assets/home/carousel/*.{jpeg,jpg,png,webp}', { eager: true });
+const images = Object.values(imageModules).map(module => module.default);
 
 export function AnimatedGallery() {
-  const [activeIndex, setActiveIndex] = useState(2);
+  const [activeIndex, setActiveIndex] = useState(Math.floor(images.length / 2) || 0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Ελέγχει αν η οθόνη είναι κινητό για να αλλάξει δυναμικά την απόσταση των καρτών
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile(); // Αρχικός έλεγχος
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full pt-8 pb-10 text-center text-muted-foreground flex items-center justify-center min-h-[300px]">
+        Δεν βρέθηκαν φωτογραφίες στον φάκελο src/assets/home/carousel
+      </div>
+    );
+  }
 
   const handleDragEnd = (event: any, info: any) => {
     const swipeThreshold = 50; 
     if (info.offset.x > swipeThreshold && activeIndex > 0) {
       setActiveIndex((prev) => prev - 1);
-    } else if (info.offset.x < -swipeThreshold && activeIndex < IMAGES.length - 1) {
+    } else if (info.offset.x < -swipeThreshold && activeIndex < images.length - 1) {
       setActiveIndex((prev) => prev + 1);
     }
   };
 
-  const nextSlide = () => activeIndex < IMAGES.length - 1 && setActiveIndex(activeIndex + 1);
+  const nextSlide = () => activeIndex < images.length - 1 && setActiveIndex(activeIndex + 1);
   const prevSlide = () => activeIndex > 0 && setActiveIndex(activeIndex - 1);
 
   return (
     <div className="w-full pt-8 pb-10 md:pt-10 md:pb-12 bg-background overflow-hidden flex flex-col items-center">
       
+      {/* Header Ενότητας */}
       <div className="w-full max-w-6xl px-4 md:px-8 mb-12 flex flex-col items-center text-center">
         <div className="flex items-center gap-3">
           <Sparkles className="h-7 w-7 text-primary" />
           <h2 className="text-3xl font-bold md:text-5xl text-ink">Η Εμπειρία μας</h2>
         </div>
         <p className="mt-4 text-muted-foreground max-w-lg">
-          Κάντε swipe ή κλικ για να περιηγηθείτε στις γεύσεις και τον χώρο μας.
+          Κάντε swipe ή κλικ για να περιηγηθείτε στον χώρο μας.
         </p>
       </div>
 
+      {/* 3D Carousel Container */}
       <div className="relative w-full max-w-7xl h-[400px] md:h-[550px] flex items-center justify-center perspective-[1200px]">
         <AnimatePresence initial={false}>
-          {IMAGES.map((item, index) => {
+          {images.map((src, index) => {
             const offset = index - activeIndex;
             const absOffset = Math.abs(offset);
             const isActive = offset === 0;
 
+            // Κρύβουμε όσες κάρτες είναι πολύ πίσω για βελτίωση απόδοσης
             if (absOffset > 2) return null;
 
-            const xOffset = offset * (typeof window !== "undefined" && window.innerWidth < 768 ? 90 : 160); 
+            // Διαφορετική απόσταση καρτών για κινητό (90px) και desktop (160px)
+            const xOffset = offset * (isMobile ? 90 : 160); 
             const zOffset = absOffset * -150; 
             const rotateY = offset * -25; 
             const scale = isActive ? 1 : 0.85; 
@@ -65,7 +72,7 @@ export function AnimatedGallery() {
 
             return (
               <motion.div
-                key={item.id}
+                key={src}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.1}
@@ -85,32 +92,22 @@ export function AnimatedGallery() {
                   isActive ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
                 }`}
               >
+                {/* Η Φωτογραφία, καθαρή χωρίς κείμενα */}
                 <img 
-                  src={item.src} 
-                  alt={item.title}
+                  src={src} 
+                  alt={`Εμπειρία ${index + 1}`}
                   className="w-full h-full object-cover pointer-events-none" 
                 />
                 
+                {/* Σκοτεινό Overlay ΜΟΝΟ για τις κάρτες που είναι στο βάθος */}
                 <div className={`absolute inset-0 bg-black transition-opacity duration-500 ${isActive ? "opacity-0" : "opacity-40"}`} />
-                
-                <motion.div 
-                  initial={false}
-                  animate={{ 
-                    opacity: isActive ? 1 : 0, 
-                    y: isActive ? 0 : 20 
-                  }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-white flex flex-col justify-end"
-                >
-                  <h3 className="text-xl md:text-3xl font-bold tracking-tight mb-2">{item.title}</h3>
-                  <p className="text-sm md:text-base text-gray-200">{item.desc}</p>
-                </motion.div>
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
 
+      {/* Κουμπιά Πλοήγησης (Βελάκια και Τελίτσες) */}
       <div className="mt-8 flex items-center gap-6">
         <button 
           onClick={prevSlide}
@@ -122,7 +119,7 @@ export function AnimatedGallery() {
         </button>
 
         <div className="flex gap-2">
-          {IMAGES.map((_, i) => (
+          {images.map((_, i) => (
             <div 
               key={i} 
               className={`h-2 rounded-full transition-all duration-300 ${
@@ -135,7 +132,7 @@ export function AnimatedGallery() {
 
         <button 
           onClick={nextSlide}
-          disabled={activeIndex === IMAGES.length - 1}
+          disabled={activeIndex === images.length - 1}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-ink shadow-sm transition-all hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Επόμενη φωτογραφία"
         >

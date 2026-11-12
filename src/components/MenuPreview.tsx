@@ -2,25 +2,30 @@ import { motion } from "framer-motion";
 import { ArrowRight, UtensilsCrossed } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
-// Οι κατηγορίες χωρίς την ανάγκη για slug/hash
+// Εισαγωγή των τοπικών φωτογραφιών από τον φάκελο src/assets/menu
+import imgPasta from "@/assets/menu/image00025.jpeg";
+import imgSeafood from "@/assets/menu/image00176.jpeg";
+import imgRisotto from "@/assets/menu/image00140.jpeg";
+
+// Οι κατηγορίες 
 const CATEGORIES = [
   {
     title: "Ζυμαρικά",
     desc: "Αυθεντικές συνταγές ζυμαρικών με πλούσιες σάλτσες και ολόφρεσκα υλικά, μαγειρεμένα al dente.",
     price: "από 5.50€",
-    img: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&q=80&w=800",
+    img: imgPasta,
   },
   {
     title: "Θαλασσινά",
     desc: "Φρέσκα θαλασσινά, μαγειρεμένα με μεράκι, που φέρνουν το άρωμα και τη φρεσκάδα της θάλασσας στο πιάτο σας.",
     price: "από 7.00€",
-    img: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?auto=format&fit=crop&q=80&w=800",
+    img: imgSeafood,
   },
   {
     title: "Risotto",
     desc: "Άψογα χυλωμένο ριζότο με εκλεκτά μανιτάρια, λαχανικά ή θαλασσινά, τέλεια δεμένο με παρμεζάνα.",
     price: "από 6.50€",
-    img: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&q=80&w=800",
+    img: imgRisotto,
   }
 ];
 
@@ -61,7 +66,6 @@ export function MenuPreview() {
               transition={{ duration: 0.6, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white/5 backdrop-blur-sm shadow-xl ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
             >
-              {/* Αφαιρέθηκε το hash={cat.slug} - Τώρα πάει πάντα απλά στο /menu */}
               <Link to="/menu" className="flex h-full w-full flex-col">
                 <div className="relative h-64 w-full overflow-hidden shrink-0">
                   <img 
