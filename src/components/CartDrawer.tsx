@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, Pencil, Trash2, Car } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useCart, type CartLine } from "@/lib/cart";
+import { useCart, type CartLine, DELIVERY_FEES } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
 import { ItemModal } from "@/components/ItemModal";
 import { supabase } from "@/lib/supabase";
@@ -12,31 +12,37 @@ type Step = "cart" | "checkout" | "redirect" | "tracking";
 
 const drawerTranslations = {
   el: {
-    cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση", empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Σύνολο", continue: "Συνέχεια στην Παραγγελία",
+    cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση", empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Τελικό Σύνολο", continue: "Συνέχεια στην Παραγγελία",
     name: "Ονοματεπώνυμο *", namePh: "π.χ. Γιώργος Παπαδόπουλος", phone: "Τηλέφωνο Επικοινωνίας *", phonePh: "π.χ. 6900000000", address: "Διεύθυνση παράδοσης *", addressPh: "Οδός και αριθμός", floor: "Όροφος", floorPh: "π.χ. 2ος", bell: "Κουδούνι", bellPh: "π.χ. Παπαδόπουλος", comments: "Σχόλια", commentsPh: "Πρόσθετες οδηγίες (προαιρετικό)",
     payment: "Τρόπος πληρωμής", cash: "Αντικαταβολή", card: "Κάρτα", vivaInfo: "Θα μεταφερθείτε με ασφάλεια στο Viva Wallet Smart Checkout.", termsPre: "Έχω διαβάσει και αποδέχομαι τους", termsLink: "Όρους Χρήσης", and: "και την", privacyLink: "Πολιτική Απορρήτου",
     submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…", dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
-    cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.", statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.", statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!", statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.", statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου", toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!", toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.", errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.", errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά."
+    cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.", statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.", statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!", statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.", statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου", toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!", toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.", errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.", errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά.",
+    deliveryZone: "Περιοχή Παράδοσης", inner: "Εντός Σερρών", outer: "Εκτός Σερρών (Περίχωρα)", itemsTotal: "Αξία Προϊόντων", deliveryCost: "Κόστος Διανομής",
+    disclaimer: "Παρακαλούμε επιλέξτε τη σωστή ζώνη. Το τελικό κόστος διανομής ενδέχεται να αναπροσαρμοστεί από το κατάστημα βάσει της ακριβούς διεύθυνσης παράδοσης."
   },
   en: {
-    cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking", empty: "Your cart is empty", without: "Without", total: "Total", continue: "Continue to Checkout",
+    cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking", empty: "Your cart is empty", without: "Without", total: "Total Amount", continue: "Continue to Checkout",
     name: "Full Name *", namePh: "e.g. John Doe", phone: "Phone Number *", phonePh: "e.g. 6900000000", address: "Delivery Address *", addressPh: "Street and number", floor: "Floor", floorPh: "e.g. 2nd", bell: "Bell", bellPh: "e.g. Doe", comments: "Comments", commentsPh: "Additional instructions (optional)",
     payment: "Payment Method", cash: "Cash on Delivery", card: "Credit/Debit Card", vivaInfo: "You will be securely redirected to Viva Wallet Smart Checkout.", termsPre: "I have read and accept the", termsLink: "Terms of Use", and: "and the", privacyLink: "Privacy Policy",
     submitViva: "Pay with Viva Wallet", submitOrder: "Submit Order", redirecting: "Redirecting to Viva Wallet Smart Checkout…", dontClose: "Please do not close this window.", orderSent: "Order Sent!", trackNum: "Tracking number",
-    cancelTitle: "Order Cancelled", cancelDesc: "The restaurant is unable to fulfill your order at this time.", statusWaiting: "Received", statusWaitingDesc: "The restaurant is reviewing your order.", statusPrep: "Preparing", statusPrepDesc: "Your meal is being cooked!", statusReady: "Ready", statusReadyDesc: "Waiting for the courier to pick it up.", statusComp: "On the Way", statusCompDesc: "Arriving shortly!", closeWindow: "Close window", toastPrep: "Your order is now in the kitchen!", toastReady: "Your order is ready and waiting for the courier!", toastComp: "The courier has picked up your order! It's on the way!", toastCancel: "Your order was cancelled by the restaurant.", errName: "Name must be at least 3 characters long.", errAddress: "Please provide a delivery address.", errPhone: "Phone must consist of exactly 10 digits.", errGeneral: "There was a problem with your order. Please try again."
+    cancelTitle: "Order Cancelled", cancelDesc: "The restaurant is unable to fulfill your order at this time.", statusWaiting: "Received", statusWaitingDesc: "The restaurant is reviewing your order.", statusPrep: "Preparing", statusPrepDesc: "Your meal is being cooked!", statusReady: "Ready", statusReadyDesc: "Waiting for the courier to pick it up.", statusComp: "On the Way", statusCompDesc: "Arriving shortly!", closeWindow: "Close window", toastPrep: "Your order is now in the kitchen!", toastReady: "Your order is ready and waiting for the courier!", toastComp: "The courier has picked up your order! It's on the way!", toastCancel: "Your order was cancelled by the restaurant.", errName: "Name must be at least 3 characters long.", errAddress: "Please provide a delivery address.", errPhone: "Phone must consist of exactly 10 digits.", errGeneral: "There was a problem with your order. Please try again.",
+    deliveryZone: "Delivery Area", inner: "Inside Serres", outer: "Outside Serres (Suburbs)", itemsTotal: "Items Value", deliveryCost: "Delivery Fee",
+    disclaimer: "Please select the correct zone. The final delivery fee may be adjusted by the store based on the exact delivery address."
   },
   bg: {
     cartHeader: "ScanEat Количка", checkoutHeader: "Завършване", trackingHeader: "Проследяване", empty: "Количката ви е празна", without: "Без", total: "Общо", continue: "Продължи към поръчка",
     name: "Име и Фамилия *", namePh: "напр. Иван Иванов", phone: "Телефон *", phonePh: "напр. 6900000000", address: "Адрес за доставка *", addressPh: "Улица и номер", floor: "Етаж", floorPh: "напр. 2-ри", bell: "Звънец", bellPh: "напр. Иванов", comments: "Коментари", commentsPh: "Допълнителни инструкции (по избор)",
     payment: "Начин на плащане", cash: "Наложен платеж", card: "Кредитна/Дебитна карта", vivaInfo: "Ще бъдете пренасочени сигурно към Viva Wallet Smart Checkout.", termsPre: "Прочетох и приемам", termsLink: "Условията за ползване", and: "и", privacyLink: "Политиката за поверителност",
     submitViva: "Плати с Viva Wallet", submitOrder: "Изпрати поръчка", redirecting: "Пренасочване към Viva Wallet Smart Checkout…", dontClose: "Моля, не затваряйте този прозорец.", orderSent: "Поръчката е изпратена!", trackNum: "Номер за проследяване",
-    cancelTitle: "Поръчката е отменена", cancelDesc: "В момента ресторантът не може да изпълни вашата поръчка.", statusWaiting: "Получена", statusWaitingDesc: "Ресторантът преглежда вашата поръчка.", statusPrep: "Приготвя се", statusPrepDesc: "Ястието ви се готви!", statusReady: "Готова", statusReadyDesc: "Чака куриера да я вземе.", statusComp: "На път", statusCompDesc: "Пристига скоро!", closeWindow: "Затвори прозореца", toastPrep: "Поръчката ви е в кухнята!", toastReady: "Поръчката ви е готова и чака куриера!", toastComp: "Куриерът взе поръчката ви! Тя е на път!", toastCancel: "Поръчката ви беше отменена от ресторанта.", errName: "Името трябва да съдържа поне 3 знака.", errAddress: "Моля, въведете адрес за доставка.", errPhone: "Телефонът трябва да съдържа точно 10 цифри.", errGeneral: "Възникна проблем с поръчката ви. Моля, опитайте отново."
+    cancelTitle: "Поръчката е отменена", cancelDesc: "В момента ресторантът не може да изпълни вашата поръчка.", statusWaiting: "Получена", statusWaitingDesc: "Ресторантът преглежда вашата поръчка.", statusPrep: "Приготвя се", statusPrepDesc: "Ястието ви се готви!", statusReady: "Готова", statusReadyDesc: "Чака куриера да я вземе.", statusComp: "На път", statusCompDesc: "Пристига скоро!", closeWindow: "Затвори прозореца", toastPrep: "Поръчката ви е в кухнята!", toastReady: "Поръчката ви е готова и чака куриера!", toastComp: "Куриерът взе поръчката ви! Тя е на път!", toastCancel: "Поръчката ви беше отменена от ресторанта.", errName: "Името трябва да съдържа поне 3 знака.", errAddress: "Моля, въведете адрес за доставка.", errPhone: "Телефонът трябва да съдържа точно 10 цифри.", errGeneral: "Възникна проблем с поръчката ви. Моля, опитайте отново.",
+    deliveryZone: "Район за доставка", inner: "В рамките на Серес", outer: "Извън Серес", itemsTotal: "Стойност на артикулите", deliveryCost: "Такса за доставка",
+    disclaimer: "Моля, изберете правилната зона. Окончателната такса за доставка може да бъде коригирана от магазина въз основа на точния адрес."
   }
 };
 
 export function CartDrawer() {
-  const { open, setOpen, lines, total, setQty, clear } = useCart();
-  const { lang, getLocalizedField } = useI18n(); 
+  const { open, setOpen, lines, itemsTotal, total, deliveryZone, setDeliveryZone, setQty, clear } = useCart();
+  const { lang } = useI18n(); 
   
   const t = (key: keyof typeof drawerTranslations.el) => drawerTranslations[lang][key] || drawerTranslations.el[key];
 
@@ -114,13 +120,29 @@ export function CartDrawer() {
         removedIngredients: line.removed, itemNote: line.note || "" 
       }));
 
-      const orderNotes = [ floor && `Όροφος: ${floor}`, bell && `Κουδούνι: ${bell}`, comments && `${comments}` ].filter(Boolean).join(" | ");
+      // Τα notes περιέχουν μόνο όροφο, κουδούνι και σχόλια.
+      const orderNotes = [ 
+        floor && `Όροφος: ${floor}`, 
+        bell && `Κουδούνι: ${bell}`, 
+        comments && `${comments}` 
+      ].filter(Boolean).join(" | ");
 
       const { data: newOrder, error } = await supabase.from("orders").insert({
-        restaurant_id: restData.id, order_type: "DELIVERY", customer_last_name: name, customer_phone: phone, customer_address: address, table_number: "Πακέτο",
-        notes: orderNotes, items: formattedItems, total_amount: total,
-        payment_method: payment === "card" ? "CARD" : "CASH", payment_status: payment === "card" ? "PENDING" : "UNPAID",
-        prep_status: "WAITING", created_at: new Date().toISOString()
+        restaurant_id: restData.id, 
+        order_type: "DELIVERY", 
+        customer_last_name: name, 
+        customer_phone: phone, 
+        customer_address: address, 
+        table_number: "Πακέτο",
+        notes: orderNotes, 
+        items: formattedItems, 
+        total_amount: total,
+        delivery_fee: DELIVERY_FEES[deliveryZone], // <-- Αποστολή Κόστους
+        delivery_zone: deliveryZone,               // <-- Αποστολή Ζώνης
+        payment_method: payment === "card" ? "CARD" : "CASH", 
+        payment_status: payment === "card" ? "PENDING" : "UNPAID",
+        prep_status: "WAITING", 
+        created_at: new Date().toISOString()
       }).select("id, prep_status").single();
 
       if (error) throw error;
@@ -236,8 +258,8 @@ export function CartDrawer() {
                     )}
                   </div>
                   <div className="shrink-0 border-t border-border p-5 bg-background">
-                    <div className="mb-4 flex justify-between text-lg font-bold"><span>{t('total')}</span><span>{formatPrice(total)}</span></div>
-                    <motion.button whileTap={{ scale: 0.97 }} disabled={lines.length === 0} onClick={() => setStep("checkout")} className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40 transition-colors hover:bg-primary/90">
+                    <div className="mb-4 flex justify-between text-lg font-bold"><span>{t('itemsTotal')}</span><span>{formatPrice(itemsTotal)}</span></div>
+                    <motion.button whileTap={{ scale: 0.97 }} disabled={lines.length === 0} onClick={() => setStep("checkout")} className="flex h-14 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground disabled:opacity-40 transition-colors hover:bg-primary/90 shadow-soft">
                       {t('continue')}
                     </motion.button>
                   </div>
@@ -261,7 +283,29 @@ export function CartDrawer() {
                       <span className="mb-2 flex justify-between text-sm font-medium"><span>{t('comments')}</span><span className="text-muted-foreground text-xs">{comments.length}/50</span></span>
                       <input value={comments} onChange={(e) => setComments(e.target.value)} maxLength={50} placeholder={t('commentsPh')} className="h-12 w-full rounded-xl border border-input bg-card px-4 outline-none focus:ring-2 focus:ring-ring" />
                     </label>
-                    <div>
+                    
+                    <div className="pt-2">
+                      <span className="mb-2 block text-sm font-medium">{t('deliveryZone')}</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([["inner", t('inner'), formatPrice(DELIVERY_FEES.inner), MapPin], ["outer", t('outer'), formatPrice(DELIVERY_FEES.outer), Car]] as const).map(([v, label, priceLabel, Icon]) => (
+                          <button 
+                            type="button" 
+                            key={v} 
+                            onClick={() => setDeliveryZone(v as any)} 
+                            className={`flex flex-col items-center justify-center gap-1 rounded-xl p-3 text-sm transition-all ${deliveryZone === v ? "bg-ink text-ink-foreground shadow-md ring-2 ring-ink/20" : "bg-card text-muted-foreground hover:bg-border/50 border border-border"}`}
+                          >
+                            <div className="flex items-center gap-2 font-semibold"><Icon className="h-4 w-4" /> {label}</div>
+                            <span className={`text-xs ${deliveryZone === v ? "text-ink-foreground/80" : "text-muted-foreground/80"}`}>+{priceLabel}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-[10px] text-muted-foreground italic flex items-start gap-1.5 leading-tight">
+                        <span className="text-amber-500">💡</span>
+                        <span>{t('disclaimer')}</span>
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-border/50">
                       <span className="mb-2 block text-sm font-medium">{t('payment')}</span>
                       <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted p-1">
                         {([["cash", t('cash'), Banknote], ["card", t('card'), CreditCard]] as const).map(([v, label, Icon]) => (
@@ -272,7 +316,12 @@ export function CartDrawer() {
                     </div>
                   </div>
                   <div className="shrink-0 border-t border-border p-5 bg-background shadow-lg">
-                    <div className="mb-3 flex justify-between text-lg font-bold"><span>{t('total')}</span><span>{formatPrice(total)}</span></div>
+                    <div className="mb-3 flex flex-col gap-1">
+                      <div className="flex justify-between text-sm text-muted-foreground"><span>{t('itemsTotal')}</span><span>{formatPrice(itemsTotal)}</span></div>
+                      <div className="flex justify-between text-sm text-muted-foreground"><span>{t('deliveryCost')}</span><span>{formatPrice(DELIVERY_FEES[deliveryZone])}</span></div>
+                      <div className="mt-1 flex justify-between text-lg font-bold pt-2 border-t border-border/50"><span>{t('total')}</span><span className="text-primary">{formatPrice(total)}</span></div>
+                    </div>
+
                     <label className="mb-4 flex items-start gap-3 cursor-pointer">
                       <input type="checkbox" required checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-input text-primary focus:ring-primary" />
                       <span className="text-[11px] text-muted-foreground leading-snug">

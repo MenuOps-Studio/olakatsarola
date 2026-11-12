@@ -18,7 +18,7 @@ function Home() {
 
   const t = {
     el: {
-      heroSub: "Το μαγειρείο των Σερρών",
+      heroSub: "Παραδοσιακό Μαγειρείο",
       heroTitle: "Ελληνική κουζίνα με πλούσιες γεύσεις και μενού που προσαρμόζονται στις προσωπικές σας προτιμήσεις.",
       btn: "Παραγγείλετε Τώρα",
       histSub: "Η ιστορία μας",
@@ -26,7 +26,7 @@ function Home() {
       histDesc: "Στην κατσαρόλα μας σιγοβράζουν συνταγές που περνούν από γενιά σε γενιά. Διαλέγουμε κάθε πρωί φρέσκα υλικά από τοπικούς παραγωγούς, ελαιόλαδο, μυρωδικά και κρέατα της περιοχής."
     },
     en: {
-      heroSub: "The traditional eatery of Serres",
+      heroSub: "Traditional eatery",
       heroTitle: "Greek cuisine with rich flavors and menus tailored to your personal preferences.",
       btn: "Order Now",
       histSub: "Our history",
@@ -34,7 +34,7 @@ function Home() {
       histDesc: "In our pot simmer recipes passed down from generation to generation. Every morning we select fresh ingredients from local producers, olive oil, herbs, and local meats."
     },
     bg: {
-      heroSub: "Традиционната закусвалня на Серес",
+      heroSub: "Традиционна кухня",
       heroTitle: "Гръцка кухня с богати вкусове и менюта, съобразени с вашите лични предпочитания.",
       btn: "Поръчай сега",
       histSub: "Нашата история",
@@ -42,7 +42,7 @@ function Home() {
       histDesc: "В нашата тенджера къкрят рецепти, предавани от поколение на поколение. Всяка сутрин избираме пресни съставки от местни производители, зехтин, билки и местни меса."
     }
   }[lang] || {
-    heroSub: "Το μαγειρείο των Σερρών",
+    heroSub: "Παραδοσιακό Μαγειρείο",
     heroTitle: "Ελληνική κουζίνα με πλούσιες γεύσεις και μενού.",
     btn: "Παραγγείλετε Τώρα",
     histSub: "Η ιστορία μας",

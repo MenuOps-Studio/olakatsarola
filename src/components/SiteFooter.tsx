@@ -9,19 +9,19 @@ export function SiteFooter() {
   // Λεξικό για το Footer
   const t = {
     el: {
-      desc1: "Το μαγειρείο των Σερρών", desc2: "Εθνικής Αντίστασης 33, Σέρρες 621 22", desc3: "Τηλ: 2321 054111",
+      desc1: "Παραδοσιακό Μαγειρείο", desc2: "Εθνικής Αντίστασης 33, Σέρρες 621 22", desc3: "Τηλ: 2321 054111",
       nav: "Πλοήγηση", home: "Αρχική", menu: "Μενού", gallery: "Γκαλερί", contact: "Επικοινωνία", follow: "Ακολουθήστε μας"
     },
     en: {
-      desc1: "The traditional eatery of Serres", desc2: "Ethnikis Antistasis 33, Serres 621 22", desc3: "Tel: +30 2321 054111",
+      desc1: "Traditional eatery", desc2: "Ethnikis Antistasis 33, Serres 621 22", desc3: "Tel: +30 2321 054111",
       nav: "Navigation", home: "Home", menu: "Menu", gallery: "Gallery", contact: "Contact", follow: "Follow us"
     },
     bg: {
-      desc1: "Традиционната закусвалня на Серес", desc2: "Етникис Антистасис 33, Серес 621 22", desc3: "Тел: +30 2321 054111",
+      desc1: "ТТрадиционна кухня", desc2: "Етникис Антистасис 33, Серес 621 22", desc3: "Тел: +30 2321 054111",
       nav: "Навигация", home: "Начало", menu: "Меню", gallery: "Галерия", contact: "Контакти", follow: "Следвайте ни"
     }
   }[lang] || {
-    desc1: "Το μαγειρείο των Σερρών", desc2: "Εθνικής Αντίστασης 33, Σέρρες 621 22", desc3: "Τηλ: 2321 054111",
+    desc1: "Παραδοσιακό Μαγειρείο", desc2: "Εθνικής Αντίστασης 33, Σέρρες 621 22", desc3: "Τηλ: 2321 054111",
     nav: "Πλοήγηση", home: "Αρχική", menu: "Μενού", gallery: "Γκαλερί", contact: "Επικοινωνία", follow: "Ακολουθήστε μας"
   };
 
