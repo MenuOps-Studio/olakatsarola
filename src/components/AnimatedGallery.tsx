@@ -1,13 +1,52 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
-// Αυτόματη φόρτωση όλων των φωτογραφιών από τον ΚΟΙΝΟ φάκελο (src/assets/home/carousel)
+// Αυτόματη φόρτωση όλων των φωτογραφιών από τον ΚΟΙΝΟ φάκελο
 const imageModules = import.meta.glob<{ default: string }>('@/assets/home/carousel/*.{jpeg,jpg,png,webp}', { eager: true });
-const images = Object.values(imageModules).map(module => module.default);
+
+// Ταξινόμηση με φυσική/αριθμητική σειρά (ώστε το 2.jpeg να μπαίνει πριν το 10.jpeg)
+const images = Object.entries(imageModules)
+  .sort(([pathA], [pathB]) => pathA.localeCompare(pathB, undefined, { numeric: true, sensitivity: 'base' }))
+  .map(([_, module]) => module.default);
 
 export function AnimatedGallery() {
-  const [activeIndex, setActiveIndex] = useState(Math.floor(images.length / 2) || 0);
+  const { lang } = useI18n();
+
+  // Λεξικό για τα κείμενα της Γκαλερί
+  const t = {
+    el: {
+      title: "Η Εμπειρία μας",
+      desc: "Κάντε swipe ή κλικ για να περιηγηθείτε στον χώρο μας.",
+      noPhotos: "Δεν βρέθηκαν φωτογραφίες στον φάκελο src/assets/home/carousel",
+      prevBtn: "Προηγούμενη φωτογραφία",
+      nextBtn: "Επόμενη φωτογραφία"
+    },
+    en: {
+      title: "Our Experience",
+      desc: "Swipe or click to explore our space.",
+      noPhotos: "No photos found in src/assets/home/carousel",
+      prevBtn: "Previous photo",
+      nextBtn: "Next photo"
+    },
+    bg: {
+      title: "Нашата атмосфера",
+      desc: "Плъзнете или кликнете, за да разгледате нашето пространство.",
+      noPhotos: "Не са намерени снимки в папка src/assets/home/carousel",
+      prevBtn: "Предишна снимка",
+      nextBtn: "Следваща снимка"
+    }
+  }[lang] || {
+    title: "Η Εμπειρία μας",
+    desc: "Κάντε swipe ή κλικ για να περιηγηθείτε στον χώρο μας.",
+    noPhotos: "Δεν βρέθηκαν φωτογραφίες στον φάκελο src/assets/home/carousel",
+    prevBtn: "Προηγούμενη φωτογραφία",
+    nextBtn: "Επόμενη φωτογραφία"
+  };
+
+  // Ξεκινάει πάντα από το 0 (την 1η φωτογραφία)
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   // Ελέγχει αν η οθόνη είναι κινητό για να αλλάξει δυναμικά την απόσταση των καρτών
@@ -21,7 +60,7 @@ export function AnimatedGallery() {
   if (images.length === 0) {
     return (
       <div className="w-full pt-8 pb-10 text-center text-muted-foreground flex items-center justify-center min-h-[300px]">
-        Δεν βρέθηκαν φωτογραφίες στον φάκελο src/assets/home/carousel
+        {t.noPhotos}
       </div>
     );
   }
@@ -45,10 +84,10 @@ export function AnimatedGallery() {
       <div className="w-full max-w-6xl px-4 md:px-8 mb-12 flex flex-col items-center text-center">
         <div className="flex items-center gap-3">
           <Sparkles className="h-7 w-7 text-primary" />
-          <h2 className="text-3xl font-bold md:text-5xl text-ink">Η Εμπειρία μας</h2>
+          <h2 className="text-3xl font-bold md:text-5xl text-ink">{t.title}</h2>
         </div>
         <p className="mt-4 text-muted-foreground max-w-lg">
-          Κάντε swipe ή κλικ για να περιηγηθείτε στον χώρο μας.
+          {t.desc}
         </p>
       </div>
 
@@ -113,7 +152,7 @@ export function AnimatedGallery() {
           onClick={prevSlide}
           disabled={activeIndex === 0}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-ink shadow-sm transition-all hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-          aria-label="Προηγούμενη φωτογραφία"
+          aria-label={t.prevBtn}
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
@@ -134,7 +173,7 @@ export function AnimatedGallery() {
           onClick={nextSlide}
           disabled={activeIndex === images.length - 1}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-ink shadow-sm transition-all hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-          aria-label="Επόμενη φωτογραφία"
+          aria-label={t.nextBtn}
         >
           <ChevronRight className="h-6 w-6" />
         </button>

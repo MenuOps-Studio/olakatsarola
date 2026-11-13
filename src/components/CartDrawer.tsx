@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, Pencil, Trash2, Car } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBag, X, Clock, Flame, MapPin, Pencil, Trash2, Car, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useCart, type CartLine, DELIVERY_FEES } from "@/lib/cart";
@@ -10,6 +10,8 @@ import { useI18n } from "@/lib/i18n";
 
 type Step = "cart" | "checkout" | "redirect" | "tracking";
 
+const GOOGLE_REVIEW_LINK = "https://www.google.com/search?sca_esv=1d561ae65d03ae5d&sxsrf=AKL5yDig17DP-RoNvPN6g5iv3O6CFF9d_g:1794531425512&q=%CE%BF%CE%BB%CE%B1+%CE%BA%CE%B1%CF%84%CF%83%CE%B1%CF%81%CE%BF%CE%BB%CE%B1&si=AE1YtOqiKPb2pdLXAi8quZ9vbH4aVq_aX8-3H9iFBLpRNK95c8WmFWxcTgtE3w8fpCeM_apdls4j8TLH88Gy8xV4FcbyZtPW7BoiO4V_XWXFaZryWz9LDm0%3D&uds=AE2AFgYS-PrrP9togVIC8vPs1lwpkY4rv3tOpNBvxKhP0HKOOyi6r899UI3WtzIA7Weyt3WQFG8_RI9r2FGWnQg6GaZY7qXgMT04L2LdmhGqbBIII6N-_ni_Pt1-tnV2piRWHXkNwIie&sa=X&sqi=2&ved=2ahUKEwihqZ_B3oOYAxVA9LsIHdFEO40Q3PALegQINhAE&biw=1536&bih=695&dpr=1.25";
+
 const drawerTranslations = {
   el: {
     cartHeader: "ScanEat Καλάθι", checkoutHeader: "Ολοκλήρωση", trackingHeader: "Παρακολούθηση", empty: "Το καλάθι σας είναι άδειο", without: "Χωρίς", total: "Τελικό Σύνολο", continue: "Συνέχεια στην Παραγγελία",
@@ -18,7 +20,8 @@ const drawerTranslations = {
     submitViva: "Πληρωμή με Viva Wallet", submitOrder: "Υποβολή Παραγγελίας", redirecting: "Μεταφορά στο Viva Wallet Smart Checkout…", dontClose: "Μην κλείσετε το παράθυρο.", orderSent: "Η Παραγγελία εστάλη!", trackNum: "Αριθμός παρακολούθησης",
     cancelTitle: "Η παραγγελία ακυρώθηκε", cancelDesc: "Το κατάστημα αδυνατεί να εξυπηρετήσει την παραγγελία σας αυτή τη στιγμή.", statusWaiting: "Λήφθηκε", statusWaitingDesc: "Το κατάστημα ελέγχει την παραγγελία.", statusPrep: "Ετοιμάζεται", statusPrepDesc: "Η κατσαρόλα πήρε φωτιά!", statusReady: "Έτοιμη", statusReadyDesc: "Περιμένει τον διανομέα να την παραλάβει.", statusComp: "Στον δρόμο", statusCompDesc: "Έρχεται από στιγμή σε στιγμή!", closeWindow: "Κλείσιμο παραθύρου", toastPrep: "Η παραγγελία σας μπήκε στην κουζίνα!", toastReady: "Η παραγγελία ετοιμάστηκε και περιμένει τον διανομέα!", toastComp: "Ο διανομέας παρέλαβε! Η παραγγελία είναι στον δρόμο!", toastCancel: "Η παραγγελία ακυρώθηκε από το κατάστημα.", errName: "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες.", errAddress: "Παρακαλώ συμπληρώστε διεύθυνση.", errPhone: "Το τηλέφωνο πρέπει να αποτελείται από ακριβώς 10 αριθμούς.", errGeneral: "Υπήρξε πρόβλημα με την παραγγελία. Δοκιμάστε ξανά.",
     deliveryZone: "Περιοχή Παράδοσης", inner: "Εντός Σερρών", outer: "Εκτός Σερρών (Περίχωρα)", itemsTotal: "Αξία Προϊόντων", deliveryCost: "Κόστος Διανομής",
-    disclaimer: "Παρακαλούμε επιλέξτε τη σωστή ζώνη. Το τελικό κόστος διανομής ενδέχεται να αναπροσαρμοστεί από το κατάστημα βάσει της ακριβούς διεύθυνσης παράδοσης."
+    disclaimer: "Παρακαλούμε επιλέξτε τη σωστή ζώνη. Το τελικό κόστος διανομής ενδέχεται να αναπροσαρμοστεί από το κατάστημα βάσει της ακριβούς διεύθυνσης παράδοσης.",
+    reviewCta: "Πες μας τη γνώμη σου", reviewBtn: "Αξιολόγηση στο Google"
   },
   en: {
     cartHeader: "ScanEat Cart", checkoutHeader: "Checkout", trackingHeader: "Order Tracking", empty: "Your cart is empty", without: "Without", total: "Total Amount", continue: "Continue to Checkout",
@@ -27,7 +30,8 @@ const drawerTranslations = {
     submitViva: "Pay with Viva Wallet", submitOrder: "Submit Order", redirecting: "Redirecting to Viva Wallet Smart Checkout…", dontClose: "Please do not close this window.", orderSent: "Order Sent!", trackNum: "Tracking number",
     cancelTitle: "Order Cancelled", cancelDesc: "The restaurant is unable to fulfill your order at this time.", statusWaiting: "Received", statusWaitingDesc: "The restaurant is reviewing your order.", statusPrep: "Preparing", statusPrepDesc: "Your meal is being cooked!", statusReady: "Ready", statusReadyDesc: "Waiting for the courier to pick it up.", statusComp: "On the Way", statusCompDesc: "Arriving shortly!", closeWindow: "Close window", toastPrep: "Your order is now in the kitchen!", toastReady: "Your order is ready and waiting for the courier!", toastComp: "The courier has picked up your order! It's on the way!", toastCancel: "Your order was cancelled by the restaurant.", errName: "Name must be at least 3 characters long.", errAddress: "Please provide a delivery address.", errPhone: "Phone must consist of exactly 10 digits.", errGeneral: "There was a problem with your order. Please try again.",
     deliveryZone: "Delivery Area", inner: "Inside Serres", outer: "Outside Serres (Suburbs)", itemsTotal: "Items Value", deliveryCost: "Delivery Fee",
-    disclaimer: "Please select the correct zone. The final delivery fee may be adjusted by the store based on the exact delivery address."
+    disclaimer: "Please select the correct zone. The final delivery fee may be adjusted by the store based on the exact delivery address.",
+    reviewCta: "Tell us your opinion", reviewBtn: "Review us on Google"
   },
   bg: {
     cartHeader: "ScanEat Количка", checkoutHeader: "Завършване", trackingHeader: "Проследяване", empty: "Количката ви е празна", without: "Без", total: "Общо", continue: "Продължи към поръчка",
@@ -36,13 +40,14 @@ const drawerTranslations = {
     submitViva: "Плати с Viva Wallet", submitOrder: "Изпрати поръчка", redirecting: "Пренасочване към Viva Wallet Smart Checkout…", dontClose: "Моля, не затваряйте този прозорец.", orderSent: "Поръчката е изпратена!", trackNum: "Номер за проследяване",
     cancelTitle: "Поръчката е отменена", cancelDesc: "В момента ресторантът не може да изпълни вашата поръчка.", statusWaiting: "Получена", statusWaitingDesc: "Ресторантът преглежда вашата поръчка.", statusPrep: "Приготвя се", statusPrepDesc: "Ястието ви се готви!", statusReady: "Готова", statusReadyDesc: "Чака куриера да я вземе.", statusComp: "На път", statusCompDesc: "Пристига скоро!", closeWindow: "Затвори прозореца", toastPrep: "Поръчката ви е в кухнята!", toastReady: "Поръчката ви е готова и чака куриера!", toastComp: "Куриерът взе поръчката ви! Тя е на път!", toastCancel: "Поръчката ви беше отменена от ресторанта.", errName: "Името трябва да съдържа поне 3 знака.", errAddress: "Моля, въведете адрес за доставка.", errPhone: "Телефонът трябва да съдържа точно 10 цифри.", errGeneral: "Възникна проблем с поръчката ви. Моля, опитайте отново.",
     deliveryZone: "Район за доставка", inner: "В рамките на Серес", outer: "Извън Серес", itemsTotal: "Стойност на артикулите", deliveryCost: "Такса за доставка",
-    disclaimer: "Моля, изберете правилната зона. Окончателната такса за доставка може да бъде коригирана от магазина въз основа на точния адрес."
+    disclaimer: "Моля, изберете правилната зона. Окончателната такса за доставка може да бъде коригирана от магазина въз основа на точния адрес.",
+    reviewCta: "Споделете вашето мнение", reviewBtn: "Оценете ни в Google"
   }
 };
 
 export function CartDrawer() {
   const { open, setOpen, lines, itemsTotal, total, deliveryZone, setDeliveryZone, setQty, clear } = useCart();
-  const { lang } = useI18n(); 
+  const { lang, getLocalizedField } = useI18n(); 
   
   const t = (key: keyof typeof drawerTranslations.el) => drawerTranslations[lang][key] || drawerTranslations.el[key];
 
@@ -120,7 +125,6 @@ export function CartDrawer() {
         removedIngredients: line.removed, itemNote: line.note || "" 
       }));
 
-      // Τα notes περιέχουν μόνο όροφο, κουδούνι και σχόλια.
       const orderNotes = [ 
         floor && `Όροφος: ${floor}`, 
         bell && `Κουδούνι: ${bell}`, 
@@ -137,8 +141,8 @@ export function CartDrawer() {
         notes: orderNotes, 
         items: formattedItems, 
         total_amount: total,
-        delivery_fee: DELIVERY_FEES[deliveryZone], // <-- Αποστολή Κόστους
-        delivery_zone: deliveryZone,               // <-- Αποστολή Ζώνης
+        delivery_fee: DELIVERY_FEES[deliveryZone],
+        delivery_zone: deliveryZone,
         payment_method: payment === "card" ? "CARD" : "CASH", 
         payment_status: payment === "card" ? "PENDING" : "UNPAID",
         prep_status: "WAITING", 
@@ -356,24 +360,38 @@ export function CartDrawer() {
                       <p className="text-sm text-red-600 mt-2">{t('cancelDesc')}</p>
                     </div>
                   ) : (
-                    <div className="relative pl-6 space-y-10 border-l-2 border-border ml-4">
-                      <div className="relative">
-                        <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("WAITING") === "completed" || getStepStatus("WAITING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Clock className="h-4 w-4" /></div>
-                        <div className={getStepStatus("WAITING") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("WAITING") === "active" ? "text-primary" : "text-ink"}`}>{t('statusWaiting')}</h4><p className="text-sm text-muted-foreground">{t('statusWaitingDesc')}</p></div>
+                    <>
+                      <div className="relative pl-6 space-y-10 border-l-2 border-border ml-4">
+                        <div className="relative">
+                          <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("WAITING") === "completed" || getStepStatus("WAITING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Clock className="h-4 w-4" /></div>
+                          <div className={getStepStatus("WAITING") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("WAITING") === "active" ? "text-primary" : "text-ink"}`}>{t('statusWaiting')}</h4><p className="text-sm text-muted-foreground">{t('statusWaitingDesc')}</p></div>
+                        </div>
+                        <div className="relative">
+                          <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("PREPARING") === "completed" || getStepStatus("PREPARING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Flame className="h-4 w-4" /></div>
+                          <div className={getStepStatus("PREPARING") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("PREPARING") === "active" ? "text-primary" : "text-ink"}`}>{t('statusPrep')}</h4><p className="text-sm text-muted-foreground">{t('statusPrepDesc')}</p></div>
+                        </div>
+                        <div className="relative">
+                          <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("READY") === "completed" || getStepStatus("READY") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><ShoppingBag className="h-4 w-4" /></div>
+                          <div className={getStepStatus("READY") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("READY") === "active" ? "text-primary" : "text-ink"}`}>{t('statusReady')}</h4><p className="text-sm text-muted-foreground">{t('statusReadyDesc')}</p></div>
+                        </div>
+                        <div className="relative">
+                          <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("COMPLETED") === "active" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"}`}><MapPin className="h-4 w-4" /></div>
+                          <div className={getStepStatus("COMPLETED") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("COMPLETED") === "active" ? "text-emerald-600" : "text-ink"}`}>{t('statusComp')}</h4><p className="text-sm text-muted-foreground">{t('statusCompDesc')}</p></div>
+                        </div>
                       </div>
-                      <div className="relative">
-                        <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("PREPARING") === "completed" || getStepStatus("PREPARING") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Flame className="h-4 w-4" /></div>
-                        <div className={getStepStatus("PREPARING") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("PREPARING") === "active" ? "text-primary" : "text-ink"}`}>{t('statusPrep')}</h4><p className="text-sm text-muted-foreground">{t('statusPrepDesc')}</p></div>
+
+                      <div className="mt-10 rounded-2xl bg-primary/5 border border-primary/10 p-5 text-center shadow-sm">
+                        <p className="text-sm font-bold text-ink mb-3">{t('reviewCta')}</p>
+                        <a 
+                          href={GOOGLE_REVIEW_LINK} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex h-10 items-center justify-center rounded-full bg-white px-5 text-xs font-bold text-primary shadow-sm hover:bg-muted transition-colors border border-border"
+                        >
+                          <Star className="h-3.5 w-3.5 mr-1.5 fill-primary" /> {t('reviewBtn')}
+                        </a>
                       </div>
-                      <div className="relative">
-                        <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("READY") === "completed" || getStepStatus("READY") === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}><ShoppingBag className="h-4 w-4" /></div>
-                        <div className={getStepStatus("READY") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("READY") === "active" ? "text-primary" : "text-ink"}`}>{t('statusReady')}</h4><p className="text-sm text-muted-foreground">{t('statusReadyDesc')}</p></div>
-                      </div>
-                      <div className="relative">
-                        <div className={`absolute -left-[35px] flex h-8 w-8 items-center justify-center rounded-full border-4 border-card ${getStepStatus("COMPLETED") === "active" ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"}`}><MapPin className="h-4 w-4" /></div>
-                        <div className={getStepStatus("COMPLETED") === "active" ? "opacity-100" : "opacity-50"}><h4 className={`text-base font-bold ${getStepStatus("COMPLETED") === "active" ? "text-emerald-600" : "text-ink"}`}>{t('statusComp')}</h4><p className="text-sm text-muted-foreground">{t('statusCompDesc')}</p></div>
-                      </div>
-                    </div>
+                    </>
                   )}
                   <div className="mt-auto pt-8">
                     <button onClick={() => { setStep("cart"); setOpen(false); setTrackingId(null); }} className="h-12 w-full rounded-full bg-ink font-semibold text-ink-foreground hover:bg-primary transition-colors">{t('closeWindow')}</button>
