@@ -14,7 +14,7 @@ export function CategoryCarousel({ images, categoryName }: Props) {
     
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4000); // Χρόνος εναλλαγής (4 δευτερόλεπτα)
+    }, 4000); 
     
     return () => clearInterval(interval);
   }, [images]);
@@ -27,13 +27,14 @@ export function CategoryCarousel({ images, categoryName }: Props) {
         <motion.img
           key={currentIndex}
           src={images[currentIndex]}
-          alt={`${categoryName} - ${currentIndex + 1}`}
+          alt={`${categoryName} ${currentIndex + 1}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }} // Διάρκεια του fade effect
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="lazy"
+          transition={{ duration: 0.8 }} 
+          className="absolute inset-0 h-full w-full object-cover transform-gpu"
+          loading={currentIndex === 0 ? "eager" : "lazy"}
+          decoding="async"
         />
       </AnimatePresence>
     </div>

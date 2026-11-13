@@ -3,42 +3,39 @@ import { ArrowRight, UtensilsCrossed } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 
-// Εισαγωγή των τοπικών φωτογραφιών από τον φάκελο src/assets/menu
-import imgPasta from "@/assets/menu/image00025.jpeg";
-import imgSeafood from "@/assets/menu/image00299.jpeg";
-import imgRisotto from "@/assets/menu/image00042.jpeg";
+import imgPasta from "@/assets/menu/makaronada-delivery-serres.webp";
+import imgSeafood from "@/assets/menu/thallasina-delivery-serres.webp";
+import imgRisotto from "@/assets/menu/risotto-delivery-serres.webp";
 
 export function MenuPreview() {
   const { lang } = useI18n();
 
-  // Λεξικό για τα σταθερά κείμενα της ενότητας
   const t = {
     el: {
-      subtitle: "Το Μενού μας",
+      subtitle: "ONLINE DELIVERY ΜΕΝΟΥ",
       title: "Εκλεκτές γεύσεις",
       titleBr: "για κάθε προτίμηση.",
       btn: "Δείτε όλο τον κατάλογο"
     },
     en: {
-      subtitle: "Our Menu",
+      subtitle: "ONLINE DELIVERY MENU",
       title: "Exquisite flavors",
       titleBr: "for every preference.",
       btn: "View full menu"
     },
     bg: {
-      subtitle: "Нашето Меню",
+      subtitle: "ONLINE DELIVERY МЕНЮ",
       title: "Изискани вкусове",
       titleBr: "за всяко предпочитание.",
       btn: "Вижте цялото меню"
     }
   }[lang] || {
-    subtitle: "Το Μενού μας",
+    subtitle: "ONLINE DELIVERY ΜΕΝΟΥ",
     title: "Εκλεκτές γεύσεις",
     titleBr: "για κάθε προτίμηση.",
     btn: "Δείτε όλο τον κατάλογο"
   };
 
-  // Οι κατηγορίες με υποστήριξη 3 γλωσσών
   const CATEGORIES = [
     {
       title: { el: "Ζυμαρικά", en: "Pasta", bg: "Паста" },
@@ -76,7 +73,6 @@ export function MenuPreview() {
     <section className="relative w-full overflow-hidden bg-ink pt-10 pb-16 md:pt-16 md:pb-32">
       <div className="mx-auto max-w-6xl px-4 md:px-8">
         
-        {/* Επικεφαλίδα και Κουμπί Καταλόγου */}
         <div className="mb-12 flex flex-col items-start justify-between gap-6 md:mb-16 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <div className="mb-4 flex items-center gap-3">
@@ -90,6 +86,8 @@ export function MenuPreview() {
           
           <Link
             to="/menu"
+            title={t.btn}
+            aria-label={`Μεταβείτε στη σελίδα καταλόγου - ${t.btn}`}
             className="group flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-7 py-4 text-sm font-bold text-ink transition-all hover:bg-primary hover:text-primary-foreground shadow-lg"
           >
             {t.btn}
@@ -97,33 +95,34 @@ export function MenuPreview() {
           </Link>
         </div>
 
-        {/* Grid με τις 3 βασικές κατηγορίες */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
           {CATEGORIES.map((cat, index) => {
-            // Επιλογή σωστής γλώσσας (αν δεν βρει το lang, γυρνάει στα Ελληνικά 'el')
             const currentTitle = cat.title[lang as keyof typeof cat.title] || cat.title.el;
             const currentDesc = cat.desc[lang as keyof typeof cat.desc] || cat.desc.el;
             const currentPrice = cat.price[lang as keyof typeof cat.price] || cat.price.el;
 
             return (
               <motion.div
-                key={index} // Χρήση index αντί για title για ασφάλεια στα keys
+                key={index}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
                 className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-white/5 backdrop-blur-sm shadow-xl ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
               >
-                <Link to="/menu" className="flex h-full w-full flex-col">
+                <Link 
+                  to="/menu" 
+                  title={`Δείτε την κατηγορία: ${currentTitle}`}
+                  aria-label={`Προβολή πιάτων κατηγορίας ${currentTitle}`}
+                  className="flex h-full w-full flex-col"
+                >
                   <div className="relative h-64 w-full overflow-hidden shrink-0">
                     <img 
                       src={cat.img} 
-                      alt={currentTitle} 
+                      alt={`Πιάτο της κατηγορίας ${currentTitle}`} 
                       className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
-                    
-                    {/* Ταμπελάκι τιμής */}
                     <div className="absolute bottom-5 left-5 rounded-full bg-white/95 backdrop-blur-sm px-4 py-1.5 text-xs font-bold text-ink shadow-lg">
                       {currentPrice}
                     </div>
@@ -141,7 +140,6 @@ export function MenuPreview() {
             );
           })}
         </div>
-
       </div>
     </section>
   );

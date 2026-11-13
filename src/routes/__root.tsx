@@ -50,11 +50,43 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 function RootShell({ children }: { children: ReactNode }) {
+  // To Απόλυτο Local SEO Schema (JSON-LD)
   const schemaOrg = {
-    "@context": "https://schema.org", "@type": "Restaurant", "name": "Όλα Κατσαρόλα",
-    "telephone": "+302321054111",
-    "address": { "@type": "PostalAddress", "streetAddress": "Εθνικής Αντίστασης 33", "addressLocality": "Σέρρες", "postalCode": "621 22", "addressCountry": "GR" }
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "Όλα Κατσαρόλα | Μαγειρευτά στις Σέρρες",
+    "image": "https://olakatsarola.gr/og-image.jpg", 
+    "description": "Το καλύτερο μαγειρείο στις Σέρρες. Παραδοσιακά Ελληνικά μαγειρευτά, ψητά και φρέσκα θαλασσινά, διαθέσιμα για dine-in, πακέτο και online παραγγελία (delivery).",
+    "@id": "https://olakatsarola.gr",
+    "url": "https://olakatsarola.gr",
+    "telephone": "+30 2321 054111",
+    "priceRange": "€€",
+    "servesCuisine": ["Ελληνική Κουζίνα", "Μαγειρευτά", "Μεσογειακή"],
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Εθνικής Αντίστασης 33",
+      "addressLocality": "Σέρρες",
+      "postalCode": "621 22",
+      "addressCountry": "GR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 41.085,
+      "longitude": 23.548
+    },
+    "openingHoursSpecification": [
+      { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "11:00", "closes": "17:00" }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/olakatsarola2019?locale=el_GR",
+      "https://www.instagram.com/ola_katsarola/"
+    ],
+    "hasMenu": {
+      "@type": "Menu",
+      "url": "https://olakatsarola.gr/menu"
+    }
   };
+
   return (
     <html lang="el">
       <head>
@@ -134,13 +166,23 @@ function RootComponent() {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0" },
-      { title: "Όλα Κατσαρόλα | Ελληνικό Μαγειρείο στις Σέρρες" },
+      { charSet: "utf-8" }, 
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0" },
+      { title: "Όλα Κατσαρόλα | Μαγειρευτό Φαγητό Delivery Σέρρες" },
+      { name: "description", content: "Παραδοσιακό Ελληνικό μαγειρείο στις Σέρρες. Απολαύστε σπιτικά μαγειρευτά, ολόφρεσκα θαλασσινά και ψητά στο χώρο μας, take-away ή με delivery." },
+      { name: "keywords", content: "μαγειρευτα σερρες, φαγητο σερρες, εστιατοριο σερρες, delivery φαγητου σερρες, ολα κατσαρολα, σουπες σερρες, ola katsarola serres" },
+      // Open Graph για Social Media (Facebook, Viber)
+      { property: "og:title", content: "Όλα Κατσαρόλα | Μαγειρευτό Φαγητό Delivery Σέρρες" },
+      { property: "og:description", content: "Παραδοσιακό Ελληνικό μαγειρείο στις Σέρρες. Απολαύστε σπιτικά μαγειρευτά με delivery στην πόρτα σας." },
+      { property: "og:type", content: "restaurant" },
+      { property: "og:url", content: "https://olakatsarola.gr" },
+      // To og:image το προσθέτεις αργότερα αν θες.
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" }, { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&family=Noto+Serif+Display:wght@500;700&display=swap" },
       { rel: "stylesheet", href: appCss },
+      { rel: "canonical", href: "https://olakatsarola.gr" }
     ],
   }),
   shellComponent: RootShell,

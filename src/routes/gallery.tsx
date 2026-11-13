@@ -4,10 +4,8 @@ import { useState } from "react";
 import { X, ArrowDown, Camera } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
-// 1. Δυναμική φόρτωση όλων των εικόνων από τον φάκελο της Γκαλερί
 const imageModules = import.meta.glob<{ default: string }>('@/assets/gallery/*.{jpeg,jpg,png,webp}', { eager: true });
 
-// 2. Εξαγωγή του ονόματος αρχείου και αριθμητική ταξινόμηση (1.jpg, 2.jpg)
 const rawImages = Object.entries(imageModules).map(([path, module]) => {
   const fileName = path.split('/').pop() || "";
   return { url: module.default, filename: fileName };
@@ -60,10 +58,9 @@ function GalleryPage() {
         ))}
       </div>
 
-      {/* 💻 ΜΟΝΟ ΓΙΑ ΥΠΟΛΟΓΙΣΤΕΣ/TABLET (Pinterest Masonry Layout σε ΟΛΟ το πλάτος) */}
+      {/* 💻 ΜΟΝΟ ΓΙΑ ΥΠΟΛΟΓΙΣΤΕΣ (Pinterest Masonry Layout - Χωρίς scroll lag) */}
       <div className="hidden md:block w-full px-4 md:px-6 lg:px-8 py-12 md:py-20">
         
-        {/* Header (Τίτλος) */}
         <div className="mb-12 flex flex-col items-center text-center">
           <div className="flex items-center gap-3">
             <Camera className="h-6 w-6 text-primary" />
@@ -72,23 +69,22 @@ function GalleryPage() {
           <h1 className="mt-3 text-4xl font-bold md:text-5xl text-ink">{title}</h1>
         </div>
 
-        {/* Pinterest Grid - Απλώνεται παντού και αυξάνει τις στήλες σε πολύ μεγάλες οθόνες */}
-        <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 md:gap-6 space-y-4 md:space-y-6">
+        <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 md:gap-6 space-y-4 md:gap-y-6">
           {galleryImages.map((src, index) => (
             <motion.div
               key={src}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "50px" }}
-              transition={{ duration: 0.5, delay: (index % 10) * 0.1, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: (index % 15) * 0.05 }} // Πιο ελαφρύ από το whileInView
               className="relative group cursor-zoom-in break-inside-avoid overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50"
               onClick={() => setSelectedImg(src)}
             >
               <img 
                 src={src} 
                 alt={`Γκαλερί ${index + 1}`} 
-                className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                loading="lazy"
+                className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                loading={index < 8 ? "eager" : "lazy"} // Φορτώνει γρήγορα μόνο τις πρώτες
+                decoding="async"
               />
               <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10 pointer-events-none" />
             </motion.div>
@@ -96,7 +92,7 @@ function GalleryPage() {
         </div>
       </div>
 
-      {/* 🔍 LIGHTBOX MODAL (Κοινό) */}
+      {/* 🔍 LIGHTBOX MODAL */}
       <AnimatePresence>
         {selectedImg && (
           <motion.div 
@@ -128,25 +124,32 @@ function GalleryPage() {
   );
 }
 
-// 📱 COMPONENT ΑΠΟΚΛΕΙΣΤΙΚΑ ΓΙΑ ΤΟ SCROLL ΤΟΥ ΚΙΝΗΤΟΥ
+// 📱 COMPONENT ΓΙΑ ΤΟ ΚΙΝΗΤΟ (Υπερ-βελτιστοποιημένο)
 function MobileGallerySlide({ src, index, total, title, sub, onSelectImg }: any) {
+  // Τα πρώτα 2 slides κατεβαίνουν αμέσως, τα υπόλοιπα ΜΟΝΟ όταν πλησιάσεις
+  const loadingType = index < 2 ? "eager" : "lazy";
+
   return (
     <div className="relative h-full w-full snap-start snap-always flex items-center justify-center p-4 pb-8 overflow-hidden">
       <div 
         className="relative z-10 h-full w-full max-w-6xl overflow-hidden rounded-3xl bg-black shadow-2xl border border-white/5 cursor-zoom-in group"
         onClick={() => onSelectImg(src)}
       >
+        {/* ΦΟΝΤΟ: Μειωμένο blur-xl αντί για 2xl, transform-gpu για επιτάχυνση */}
         <img 
           src={src} 
           alt="" 
-          className="absolute inset-0 h-full w-full object-cover opacity-60 blur-2xl scale-110 pointer-events-none"
+          className="absolute inset-0 h-full w-full object-cover opacity-50 blur-xl scale-110 transform-gpu pointer-events-none"
+          loading={loadingType}
+          decoding="async"
         />
 
         <img 
           src={src} 
           alt={`Στιγμιότυπο ${index + 1}`} 
-          className="relative z-10 h-full w-full object-contain transition-transform duration-700 group-hover:scale-105"
-          loading={index === 0 ? "eager" : "lazy"} 
+          className="relative z-10 h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+          loading={loadingType}
+          decoding="async"
         />
         
         <div className="absolute inset-0 z-20 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none" />
