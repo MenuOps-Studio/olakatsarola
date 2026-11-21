@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as PaymentFailedRouteImport } from './routes/payment-failed'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SuccessRouteImport } from './routes/success'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -37,6 +38,11 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentFailedRoute = PaymentFailedRouteImport.update({
+  id: '/payment-failed',
+  path: '/payment-failed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/menu': typeof MenuRoute
+  '/payment-failed': typeof PaymentFailedRoute
   '/privacy': typeof PrivacyRoute
   '/success': typeof SuccessRoute
   '/terms': typeof TermsRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/menu': typeof MenuRoute
+  '/payment-failed': typeof PaymentFailedRoute
   '/privacy': typeof PrivacyRoute
   '/success': typeof SuccessRoute
   '/terms': typeof TermsRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/menu': typeof MenuRoute
+  '/payment-failed': typeof PaymentFailedRoute
   '/privacy': typeof PrivacyRoute
   '/success': typeof SuccessRoute
   '/terms': typeof TermsRoute
@@ -84,16 +93,31 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/contact' | '/gallery' | '/menu' | '/privacy' | '/success' | '/terms'
+    | '/'
+    | '/contact'
+    | '/gallery'
+    | '/menu'
+    | '/payment-failed'
+    | '/privacy'
+    | '/success'
+    | '/terms'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/contact' | '/gallery' | '/menu' | '/privacy' | '/success' | '/terms'
+    | '/'
+    | '/contact'
+    | '/gallery'
+    | '/menu'
+    | '/payment-failed'
+    | '/privacy'
+    | '/success'
+    | '/terms'
   id:
     | '__root__'
     | '/'
     | '/contact'
     | '/gallery'
     | '/menu'
+    | '/payment-failed'
     | '/privacy'
     | '/success'
     | '/terms'
@@ -104,6 +128,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
   MenuRoute: typeof MenuRoute
+  PaymentFailedRoute: typeof PaymentFailedRoute
   PrivacyRoute: typeof PrivacyRoute
   SuccessRoute: typeof SuccessRoute
   TermsRoute: typeof TermsRoute
@@ -139,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/payment-failed': {
+      id: '/payment-failed'
+      path: '/payment-failed'
+      fullPath: '/payment-failed'
+      preLoaderRoute: typeof PaymentFailedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -168,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
   MenuRoute: MenuRoute,
+  PaymentFailedRoute: PaymentFailedRoute,
   PrivacyRoute: PrivacyRoute,
   SuccessRoute: SuccessRoute,
   TermsRoute: TermsRoute,

@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n";
 // Αυτόματη φόρτωση όλων των φωτογραφιών από τον ΚΟΙΝΟ φάκελο
 const imageModules = import.meta.glob<{ default: string }>('@/assets/home/carousel/*.{jpeg,jpg,png,webp}', { eager: true });
 
-// Ταξινόμηση με φυσική/αριθμητική σειρά (ώστε το 2.jpeg να μπαίνει πριν το 10.jpeg)
+// Ταξινόμηση με φυσική/αριθμητική σειρά (ώστε το 2.webp να μπαίνει πριν το 10.webp)
 const images = Object.entries(imageModules)
   .sort(([pathA], [pathB]) => pathA.localeCompare(pathB, undefined, { numeric: true, sensitivity: 'base' }))
   .map(([_, module]) => module.default);
@@ -14,7 +14,6 @@ const images = Object.entries(imageModules)
 export function AnimatedGallery() {
   const { lang } = useI18n();
 
-  // Λεξικό για τα κείμενα της Γκαλερί
   const t = {
     el: {
       title: "Η Εμπειρία μας",
@@ -45,14 +44,12 @@ export function AnimatedGallery() {
     nextBtn: "Επόμενη φωτογραφία"
   };
 
-  // Ξεκινάει πάντα από το 0 (την 1η φωτογραφία)
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Ελέγχει αν η οθόνη είναι κινητό για να αλλάξει δυναμικά την απόσταση των καρτών
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile(); // Αρχικός έλεγχος
+    checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
@@ -65,8 +62,8 @@ export function AnimatedGallery() {
     );
   }
 
-  const handleDragEnd = (event: any, info: any) => {
-    const swipeThreshold = 50; 
+  const handleDragEnd = (_event: any, info: any) => {
+    const swipeThreshold = 50;
     if (info.offset.x > swipeThreshold && activeIndex > 0) {
       setActiveIndex((prev) => prev - 1);
     } else if (info.offset.x < -swipeThreshold && activeIndex < images.length - 1) {
@@ -92,22 +89,20 @@ export function AnimatedGallery() {
       </div>
 
       {/* 3D Carousel Container */}
-      <div className="relative w-full max-w-7xl h-[400px] md:h-[550px] flex items-center justify-center perspective-[1200px]">
+      <div className="relative w-full max-w-7xl h-[400px] md:h-[550px] flex items-center justify-center perspective-[1200px] touch-pan-y">
         <AnimatePresence initial={false}>
           {images.map((src, index) => {
             const offset = index - activeIndex;
             const absOffset = Math.abs(offset);
             const isActive = offset === 0;
 
-            // Κρύβουμε όσες κάρτες είναι πολύ πίσω για βελτίωση απόδοσης
             if (absOffset > 2) return null;
 
-            // Διαφορετική απόσταση καρτών για κινητό (90px) και desktop (160px)
-            const xOffset = offset * (isMobile ? 90 : 160); 
-            const zOffset = absOffset * -150; 
-            const rotateY = offset * -25; 
-            const scale = isActive ? 1 : 0.85; 
-            const opacity = isActive ? 1 : 0.5 - (absOffset * 0.1); 
+            const xOffset = offset * (isMobile ? 90 : 160);
+            const zOffset = absOffset * -150;
+            const rotateY = offset * -25;
+            const scale = isActive ? 1 : 0.85;
+            const opacity = isActive ? 1 : 0.55 - (absOffset * 0.1);
 
             return (
               <motion.div
@@ -123,32 +118,37 @@ export function AnimatedGallery() {
                   scale: scale,
                   opacity: opacity,
                   zIndex: 20 - absOffset,
-                  filter: isActive ? "blur(0px)" : "blur(4px)"
                 }}
-                transition={{ type: "spring", stiffness: 220, damping: 25 }}
+                transition={{ type: "spring", stiffness: 240, damping: 28 }}
                 onClick={() => setActiveIndex(index)}
-                className={`absolute h-[320px] w-[240px] md:h-[500px] md:w-[380px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border/50 bg-card ${
+                className={`absolute h-[320px] w-[240px] md:h-[500px] md:w-[380px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border/50 bg-card will-change-transform ${
                   isActive ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
                 }`}
               >
-                {/* Η Φωτογραφία, καθαρή χωρίς κείμενα */}
-                <img 
-                  src={src} 
-                  alt={`Εμπειρία ${index + 1}`}
-                  className="w-full h-full object-cover pointer-events-none" 
+                <img
+                  src={src}
+                  alt={`Όλα Κατσαρόλα Σέρρες - Εμπειρία ${index + 1}`}
+                  loading={absOffset <= 1 ? "eager" : "lazy"}
+                  decoding="async"
+                  className={`w-full h-full object-cover pointer-events-none transition-[filter] duration-300 ${
+                    isActive ? "blur-0" : "blur-[3px]"
+                  }`}
                 />
-                
-                {/* Σκοτεινό Overlay ΜΟΝΟ για τις κάρτες που είναι στο βάθος */}
-                <div className={`absolute inset-0 bg-black transition-opacity duration-500 ${isActive ? "opacity-0" : "opacity-40"}`} />
+
+                <div
+                  className={`absolute inset-0 bg-black transition-opacity duration-300 pointer-events-none ${
+                    isActive ? "opacity-0" : "opacity-45"
+                  }`}
+                />
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
 
-      {/* Κουμπιά Πλοήγησης (Βελάκια και Τελίτσες) */}
+      {/* Κουμπιά Πλοήγησης */}
       <div className="mt-8 flex items-center gap-6">
-        <button 
+        <button
           onClick={prevSlide}
           disabled={activeIndex === 0}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-ink shadow-sm transition-all hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
@@ -159,8 +159,8 @@ export function AnimatedGallery() {
 
         <div className="flex gap-2">
           {images.map((_, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className={`h-2 rounded-full transition-all duration-300 ${
                 i === activeIndex ? "w-6 bg-primary" : "w-2 bg-border cursor-pointer hover:bg-primary/50"
               }`}
@@ -169,7 +169,7 @@ export function AnimatedGallery() {
           ))}
         </div>
 
-        <button 
+        <button
           onClick={nextSlide}
           disabled={activeIndex === images.length - 1}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-ink shadow-sm transition-all hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
